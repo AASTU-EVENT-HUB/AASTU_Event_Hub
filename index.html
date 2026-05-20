@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AASTU Events Hub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav>
+    <h2>AASTU Events</h2>
+    <div>
+        <a href="events.html">Events</a>
+        <a href="login.html">Login</a>
+    </div>
+</nav>
+
+<section class="hero">
+    <h1>Discover Campus Events</h1>
+    <p>Workshops • Hackathons • Conferences</p>
+    <br>
+    <a href="events.html"><button class="btn">Browse Events</button></a>
+</section>
+
+<div class="container">
+    <h2>Upcoming Events</h2>
+    <br>
+
+    <div class="grid">
+        <div class="card">
+            <img src="https://picsum.photos/300/200">
+            <h3>Hackathon 2026</h3>
+            <p>May 30</p>
+            <button class="btn" onclick="viewEvent()">View Details</button>
+        </div>
+
+        <div class="card">
+            <img src="https://picsum.photos/301/200">
+            <h3>AI Workshop</h3>
+            <p>June 5</p>
+            <button class="btn" onclick="viewEvent()">View Details</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
