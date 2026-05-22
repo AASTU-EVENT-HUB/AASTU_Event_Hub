@@ -56,6 +56,8 @@ export default function App() {
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/:id" element={<EventDetailPage />} />
               <Route path="/help" element={<HelpPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
 
               {/* ── Auth ── */}
               <Route path="/login" element={<LoginPage />} />

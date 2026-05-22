@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import PublicNavbar from '../components/layout/PublicNavbar';
@@ -53,9 +53,12 @@ export default function EventDetailPage() {
   };
   const [activeTab, setActiveTab] = useState('about');
   const [faqOpen, setFaqOpen] = useState({});
+  const [scheduleOpen, setScheduleOpen] = useState({});
   const [similarIdx, setSimilarIdx] = useState(0);
+  const [speakerModal, setSpeakerModal] = useState(null);
 
-  const similar = MOCK_EVENTS.filter(e => e.id !== id && e.category === event.category).slice(0, 4);
+  const similar = MOCK_EVENTS.filter(e => e.id !== id && e.category === event.category).slice(0, 8);
+  const visibleSimilar = similar.slice(similarIdx, similarIdx + 4);
 
   const handleRegister = () => {
     if (!user) { navigate('/login'); return; }
@@ -135,8 +138,8 @@ export default function EventDetailPage() {
           {/* LEFT COLUMN */}
           <div>
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #1E2A45', marginBottom: 28 }}>
-              {['about', 'schedule', 'speakers', 'faq'].map(tab => (
+            <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #1E2A45', marginBottom: 28, flexWrap: 'wrap' }}>
+              {['about', 'schedule', 'speakers', ...(event.prizes ? ['prizes'] : []), ...(event.rules ? ['rules'] : []), 'faq'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -147,8 +150,7 @@ export default function EventDetailPage() {
                     color: activeTab === tab ? '#fff' : '#64748B',
                     fontSize: 14, fontWeight: activeTab === tab ? 600 : 400,
                     cursor: 'pointer', textTransform: 'capitalize',
-                    transition: 'all 0.15s',
-                    marginBottom: -1,
+                    transition: 'all 0.15s', marginBottom: -1,
                   }}
                 >
                   {tab}
@@ -199,18 +201,38 @@ export default function EventDetailPage() {
                   <div style={{ position: 'relative', paddingLeft: 24 }}>
                     <div style={{ position: 'absolute', left: 7, top: 8, bottom: 8, width: 2, background: '#1E2A45' }} />
                     {event.schedule.map((item, i) => (
-                      <div key={i} style={{ position: 'relative', marginBottom: 28 }}>
+                      <div key={i} style={{ position: 'relative', marginBottom: 12 }}>
                         <div style={{
-                          position: 'absolute', left: -24, top: 4,
+                          position: 'absolute', left: -24, top: 14,
                           width: 12, height: 12, borderRadius: '50%',
                           background: i === 0 ? '#3B6FFF' : '#1E2A45',
                           border: '2px solid #3B6FFF',
                         }} />
-                        <div style={{ fontSize: 11, color: '#3B6FFF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                          {item.date}
+                        <div
+                          onClick={() => setScheduleOpen(s => ({ ...s, [i]: !s[i] }))}
+                          style={{
+                            background: '#111827', border: '1px solid #1E2A45',
+                            borderRadius: 12, padding: '14px 18px', cursor: 'pointer',
+                            transition: 'border-color 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = '#2A3A55'}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = '#1E2A45'}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontSize: 11, color: '#3B6FFF', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                                {item.date}{item.time ? ` · ${item.time}` : ''}
+                              </div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{item.title}</div>
+                            </div>
+                            <span style={{ color: '#64748B', fontSize: 16, transition: 'transform 0.2s', transform: scheduleOpen[i] ? 'rotate(180deg)' : 'none', flexShrink: 0, marginLeft: 12 }}>∨</span>
+                          </div>
+                          {scheduleOpen[i] && (
+                            <div style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid #1E2A45' }}>
+                              {item.description}
+                            </div>
+                          )}
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{item.title}</div>
-                        <div style={{ fontSize: 13, color: '#94A3B8' }}>{item.description}</div>
                       </div>
                     ))}
                   </div>
@@ -228,25 +250,107 @@ export default function EventDetailPage() {
                   <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>Keynote Speakers</h2>
                 </div>
                 {event.speakers ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
                     {event.speakers.map(speaker => (
-                      <div key={speaker.name} className="card" style={{ padding: 20 }}>
-                        <div style={{
-                          width: 56, height: 56, borderRadius: '50%',
-                          overflow: 'hidden', marginBottom: 12,
-                          border: '2px solid #1E2A45',
-                        }}>
+                      <div
+                        key={speaker.name}
+                        className="card"
+                        style={{ padding: 20, cursor: 'pointer', transition: 'border-color 0.15s' }}
+                        onClick={() => setSpeakerModal(speaker)}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = '#3B6FFF'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = '#1E2A45'}
+                      >
+                        <div style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', marginBottom: 12, border: '2px solid #1E2A45' }}>
                           <img src={speaker.avatar} alt={speaker.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{speaker.name}</div>
                         <div style={{ fontSize: 12, color: '#3B6FFF', marginBottom: 8 }}>{speaker.role}</div>
-                        <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>{speaker.bio}</div>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>Click to read bio →</div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <p style={{ color: '#64748B', fontSize: 14 }}>Speakers will be announced soon.</p>
                 )}
+              </div>
+            )}
+
+            {/* Prizes */}
+            {activeTab === 'prizes' && event.prizes && (
+              <div className="fade-in">
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 24 }}>🏆 Prizes & Awards</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {event.prizes.map((prize, i) => (
+                    <div key={i} style={{
+                      background: '#111827', border: `1px solid ${i === 0 ? 'rgba(245,166,35,0.4)' : i === 1 ? 'rgba(148,163,184,0.3)' : '#1E2A45'}`,
+                      borderRadius: 12, padding: '16px 20px',
+                      display: 'flex', alignItems: 'center', gap: 16,
+                    }}>
+                      <span style={{ fontSize: 32, flexShrink: 0 }}>{prize.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{prize.place}</div>
+                        <div style={{ fontSize: 13, color: '#94A3B8' }}>{prize.description}</div>
+                      </div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: i === 0 ? '#F5A623' : i === 1 ? '#94A3B8' : '#CD7F32', flexShrink: 0 }}>
+                        {prize.amount}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {event.sponsors && event.sponsors.length > 0 && (
+                  <div style={{ marginTop: 32 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Sponsors</h3>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      {event.sponsors.map((s, i) => (
+                        <div key={i} style={{
+                          background: '#111827', border: '1px solid #1E2A45', borderRadius: 10,
+                          padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 8,
+                        }}>
+                          <span style={{ fontSize: 18 }}>🏢</span>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{s.name}</div>
+                            <div style={{ fontSize: 11, color: '#F5A623' }}>{s.tier} Sponsor</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Rules */}
+            {activeTab === 'rules' && event.rules && (
+              <div className="fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>📋 Rules & Guidelines</h2>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => {
+                      const el = document.createElement('a');
+                      el.href = '#';
+                      alert('PDF download coming soon — rules are listed below.');
+                    }}
+                  >
+                    ⬇ Download Rules PDF
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {event.rules.map((rule, i) => (
+                    <div key={i} style={{
+                      display: 'flex', gap: 14, padding: '14px 18px',
+                      background: '#111827', border: '1px solid #1E2A45', borderRadius: 10,
+                    }}>
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(59,111,255,0.15)', border: '1px solid rgba(59,111,255,0.3)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 700, color: '#3B6FFF',
+                      }}>{i + 1}</div>
+                      <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.7, margin: 0 }}>{rule}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -290,19 +394,27 @@ export default function EventDetailPage() {
             )}
 
             {/* Sponsors */}
-            <div style={{ marginTop: 48 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', textAlign: 'center', marginBottom: 20 }}>
-                Global Partners & Sponsors
-              </h3>
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                {[1,2,3,4,5].map(i => (
-                  <div key={i} style={{
-                    width: 100, height: 40, background: '#1E2A45',
-                    borderRadius: 8, border: '1px solid #2A3A55',
-                  }} />
-                ))}
+            {event.sponsors && event.sponsors.length > 0 && (
+              <div style={{ marginTop: 48 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', textAlign: 'center', marginBottom: 20 }}>
+                  Partners & Sponsors
+                </h3>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {event.sponsors.map((s, i) => (
+                    <div key={i} style={{
+                      background: '#111827', border: '1px solid #1E2A45', borderRadius: 10,
+                      padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 8,
+                    }}>
+                      <span style={{ fontSize: 18 }}>🏢</span>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{s.name}</div>
+                        <div style={{ fontSize: 11, color: '#F5A623' }}>{s.tier} Sponsor</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* RIGHT COLUMN — Registration card */}
@@ -416,8 +528,15 @@ export default function EventDetailPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: '#94A3B8' }}>Share event</span>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: 16 }}>⬆</button>
-                  <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: 16 }}>🔖</button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast.success('Link copied!', 'Event URL copied to clipboard');
+                    }}
+                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: 16 }}
+                    title="Copy link"
+                  >⬆</button>
+                  <button style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: 16 }} title="Bookmark">🔖</button>
                 </div>
               </div>
             </div>
@@ -444,31 +563,81 @@ export default function EventDetailPage() {
                   disabled={similarIdx === 0}
                   style={{
                     width: 36, height: 36, borderRadius: '50%',
-                    background: 'transparent', border: '1px solid #1E2A45',
-                    color: '#94A3B8', cursor: 'pointer', fontSize: 16,
+                    background: similarIdx === 0 ? 'transparent' : 'rgba(59,111,255,0.15)',
+                    border: `1px solid ${similarIdx === 0 ? '#1E2A45' : '#3B6FFF'}`,
+                    color: similarIdx === 0 ? '#64748B' : '#3B6FFF',
+                    cursor: similarIdx === 0 ? 'not-allowed' : 'pointer', fontSize: 18,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >‹</button>
                 <button
-                  onClick={() => setSimilarIdx(i => Math.min(similar.length - 3, i + 1))}
-                  disabled={similarIdx >= similar.length - 3}
+                  onClick={() => setSimilarIdx(i => Math.min(similar.length - 4, i + 1))}
+                  disabled={similarIdx >= similar.length - 4}
                   style={{
                     width: 36, height: 36, borderRadius: '50%',
-                    background: 'transparent', border: '1px solid #1E2A45',
-                    color: '#94A3B8', cursor: 'pointer', fontSize: 16,
+                    background: similarIdx >= similar.length - 4 ? 'transparent' : 'rgba(59,111,255,0.15)',
+                    border: `1px solid ${similarIdx >= similar.length - 4 ? '#1E2A45' : '#3B6FFF'}`,
+                    color: similarIdx >= similar.length - 4 ? '#64748B' : '#3B6FFF',
+                    cursor: similarIdx >= similar.length - 4 ? 'not-allowed' : 'pointer', fontSize: 18,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >›</button>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              {similar.slice(similarIdx, similarIdx + 4).map(e => (
+              {visibleSimilar.map(e => (
                 <EventCard key={e.id} event={e} compact />
               ))}
             </div>
+            {/* Dot indicators */}
+            {similar.length > 4 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 16 }}>
+                {Array.from({ length: Math.ceil(similar.length / 4) }).map((_, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setSimilarIdx(i * 4)}
+                    style={{
+                      width: i * 4 === similarIdx ? 20 : 6, height: 6, borderRadius: 3,
+                      background: i * 4 === similarIdx ? '#3B6FFF' : '#1E2A45',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       <Footer />
+
+      {/* Speaker modal */}
+      {speakerModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setSpeakerModal(null)}
+          onKeyDown={e => e.key === 'Escape' && setSpeakerModal(null)}
+        >
+          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Speaker</h3>
+              <button className="modal-close" onClick={() => setSpeakerModal(null)}>×</button>
+            </div>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <img
+                src={speakerModal.avatar}
+                alt={speakerModal.name}
+                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '3px solid #1E2A45', flexShrink: 0 }}
+              />
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{speakerModal.name}</div>
+                <div style={{ fontSize: 13, color: '#3B6FFF', marginBottom: 12 }}>{speakerModal.role}</div>
+                <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.7 }}>{speakerModal.bio}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,6 +27,8 @@ export default function AdminUsersPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [createModal, setCreateModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', studentId: '', department: '', role: 'student', password: '' });
 
   const filtered = users.filter(u => {
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()) || u.studentId.toLowerCase().includes(search.toLowerCase());
