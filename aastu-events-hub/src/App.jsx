@@ -15,6 +15,8 @@ import TeamRegistrationPage from './pages/TeamRegistrationPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProposeEventPage from './pages/ProposeEventPage';
 import HelpPage from './pages/HelpPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage';
