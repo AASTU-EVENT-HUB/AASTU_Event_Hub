@@ -18,6 +18,8 @@ export default function AdminUsersPage() {
   const [filterRole, setFilterRole] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [createModal, setCreateModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', studentId: '', department: '', role: 'student', password: '' });
 
   const loadUsers = async () => {
     try {
