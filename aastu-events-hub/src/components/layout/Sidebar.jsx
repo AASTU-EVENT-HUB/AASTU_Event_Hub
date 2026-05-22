@@ -1,14 +1,13 @@
-import { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../Logo';
-import HelpCenter from '../HelpCenter';
 
 const studentNav = [
   { to: '/dashboard', icon: '⊞', label: 'Dashboard', end: true },
   { to: '/events', icon: '📅', label: 'Events' },
   { to: '/dashboard/tickets', icon: '🎫', label: 'My Tickets' },
   { to: '/dashboard/analytics', icon: '📊', label: 'Analytics' },
+  { to: '/propose-event', icon: '✨', label: 'Propose Event' },
   { to: '/dashboard/settings', icon: '⚙', label: 'Settings' },
 ];
 
@@ -28,7 +27,6 @@ const adminNav = [
 export default function Sidebar({ isAdmin = false }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [showHelp, setShowHelp] = useState(false);
   const navItems = isAdmin ? adminNav : studentNav;
 
   const handleLogout = () => {
@@ -116,7 +114,7 @@ export default function Sidebar({ isAdmin = false }) {
           </button>
 
           <button
-            onClick={() => setShowHelp(true)}
+            onClick={() => navigate('/help')}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               width: '100%', padding: '8px 12px',

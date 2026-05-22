@@ -61,30 +61,32 @@ export default function PublicNavbar() {
 
           {/* Right side */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-            {/* Notifications */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => { setShowNotifications(s => !s); setShowMenu(false); }}
-                style={{
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid #1E2A45',
-                  borderRadius: 8, color: '#94A3B8', fontSize: 16, cursor: 'pointer',
-                  width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  position: 'relative',
-                }}
-              >
-                🔔
-                {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: 3, right: 3,
-                    width: 16, height: 16, borderRadius: '50%',
-                    background: '#EF4444', border: '1.5px solid #0A0F2C',
-                    fontSize: 9, fontWeight: 700, color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
-                )}
-              </button>
-              {showNotifications && <NotificationPanel onClose={() => setShowNotifications(false)} />}
-            </div>
+            {/* Notifications — only for logged-in users */}
+            {user && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => { setShowNotifications(s => !s); setShowMenu(false); }}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid #1E2A45',
+                    borderRadius: 8, color: '#94A3B8', fontSize: 16, cursor: 'pointer',
+                    width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative',
+                  }}
+                >
+                  🔔
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: 3, right: 3,
+                      width: 16, height: 16, borderRadius: '50%',
+                      background: '#EF4444', border: '1.5px solid #0A0F2C',
+                      fontSize: 9, fontWeight: 700, color: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+                  )}
+                </button>
+                {showNotifications && <NotificationPanel onClose={() => setShowNotifications(false)} />}
+              </div>
+            )}
 
             {/* Help */}
             <button

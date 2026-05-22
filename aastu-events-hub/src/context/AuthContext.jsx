@@ -1,34 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { DEV_MODE, DEV_MOCK_STUDENT, DEV_MOCK_ADMIN } from '../data/mockData';
 
 const AuthContext = createContext(null);
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// Mock data for development
-const MOCK_STUDENT = {
-  id: 'u1',
-  name: 'Selam Balcha',
-  email: 'selam@aastu.edu.et',
-  studentId: 'AAU-2021-CS-042',
-  department: 'Computer Science & AI',
-  role: 'student',
-  avatar: null,
-  bio: 'Passionate about algorithmic efficiency and decentralized systems.',
-  interests: ['Tech', 'Hackathons', 'Workshops'],
-  onboardingComplete: true,
-  eventCredits: 1240,
-  gpa: 3.85,
-};
-
-const MOCK_ADMIN = {
-  id: 'a1',
-  name: 'Mekdes A.',
-  email: 'admin@aastu.edu.et',
-  role: 'admin',
-  avatar: null,
-  department: 'Administration',
-};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -48,7 +24,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // Try real API first, fall back to mock
+      // Try real API first
       try {
         const res = await axios.post(`${API_BASE}/auth/login`, { email, password });
         const { user: userData, token: userToken } = res.data;
@@ -59,8 +35,12 @@ export function AuthProvider({ children }) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
         return { success: true, user: userData };
       } catch {
-        // Mock login for development
-        const mockUser = email.includes('admin') ? MOCK_ADMIN : MOCK_STUDENT;
+        // DEV_MODE mock fallback — disabled in production
+        if (!DEV_MODE) {
+          return { success: false, error: 'Invalid credentials' };
+        }
+        const mockUser = email.includes('admin') ? DEV_MOCK_ADMIN : DEV_MOCK_STUDENT;
+        if (!mockUser) return { success: false, error: 'Invalid credentials' };
         const mockToken = 'mock-token-' + Date.now();
         setUser(mockUser);
         setToken(mockToken);
@@ -78,13 +58,21 @@ export function AuthProvider({ children }) {
       try {
         const res = await axios.post(`${API_BASE}/auth/register`, data);
         const { user: userData, token: userToken } = res.data;
-        setUser({ ...userData, onboardingComplete: false });
+        const newUser = { ...userData, onboardingComplete: false };
+        setUser(newUser);
         setToken(userToken);
-        localStorage.setItem('aastu_user', JSON.stringify({ ...userData, onboardingComplete: false }));
+        localStorage.setItem('aastu_user', JSON.stringify(newUser));
         localStorage.setItem('aastu_token', userToken);
-        return { success: true, user: userData };
+        return { success: true, user: newUser };
       } catch {
-        const newUser = { ...MOCK_STUDENT, ...data, id: 'u' + Date.now(), onboardingComplete: false };
+        if (!DEV_MODE) return { success: false, error: 'Registration failed. Please try again.' };
+        const newUser = {
+          ...(DEV_MOCK_STUDENT || {}),
+          ...data,
+          id: 'u' + Date.now(),
+          onboardingComplete: false,
+          role: 'student',
+        };
         const mockToken = 'mock-token-' + Date.now();
         setUser(newUser);
         setToken(mockToken);
