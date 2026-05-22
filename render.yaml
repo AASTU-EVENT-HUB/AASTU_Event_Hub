@@ -27,8 +27,8 @@ services:
     buildCommand: npm install && npm run build
     publishPath: frontend/dist
     envVars:
-      - key: VITE_API_BASE_URL
-        value: "https://<PUT_BACKEND_URL_HERE>/api"
+      - key: VITE_API_URL
+        value: "https://aastu-event-hub.onrender.com/api"
 
 # Notes:
 # - This file is a template. For secrets (DB_HOST, DB_USER, DB_PASSWORD, JWT_SECRET, etc.)

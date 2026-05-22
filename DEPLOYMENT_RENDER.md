@@ -51,7 +51,7 @@ Option B: SQLite
 - Build command: `npm install && npm run build` (Render runs commands in the repo root; the root `build` script runs `cd frontend && vite build`).
 - Publish directory: `frontend/dist`
 - Environment variables (optional):
-  - `VITE_API_BASE_URL` = `https://<your-backend-service>.onrender.com/api`
+  - `VITE_API_URL` = `https://aastu-event-hub.onrender.com/api`
 
 5. Running DB migrations / applying `schema.sql`
 
@@ -66,14 +66,14 @@ Or use a web-based DB admin (Adminer, phpMyAdmin) or provider console to run the
 
 6. Common troubleshooting
 
-- If the frontend cannot reach the backend: ensure `VITE_API_BASE_URL` matches the backend URL and that CORS is allowed in the backend (the backend uses `cors` by default).
+- If the frontend cannot reach the backend: ensure `VITE_API_URL` matches the backend URL and that CORS is allowed in the backend (the backend uses `cors` by default).
 - For persistent storage use managed DB, not SQLite.
 
 7. Quick checklist for you to complete on Render
 
 - [ ] Create MySQL database (PlanetScale or provider).
 - [ ] Create Render Web Service for backend; set env vars and link DB.
-- [ ] Create Render Static Site for frontend; set `VITE_API_BASE_URL` to backend URL.
+- [ ] Create Render Static Site for frontend; set `VITE_API_URL` to `https://aastu-event-hub.onrender.com/api`.
 - [ ] Run `backend/schema.sql` against your managed DB.
 
 If you'd like, I can:
