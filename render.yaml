@@ -1,0 +1,38 @@
+# Render service manifest (template)
+# Replace placeholder values and secrets in the Render dashboard after linking your repo.
+
+services:
+  - type: web
+    name: aastu-backend
+    env: node
+    region: oregon
+    branch: azeb
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      # DO NOT add secrets here. Instead set them in the Render dashboard for security.
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_TYPE
+        value: mysql
+
+  - type: static_site
+    name: aastu-frontend
+    branch: azeb
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    publishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: "https://aastu-event-hub.onrender.com/api"
+
+# Notes:
+# - This file is a template. For secrets (DB_HOST, DB_USER, DB_PASSWORD, JWT_SECRET, etc.)
+#   set them in the Render Dashboard when creating the services.
+# - If you prefer SQLite instead of an external MySQL, set `DB_TYPE=sqlite`. Be aware
+#   that file-based SQLite storage may not survive redeploys unless you attach persistent
+#   storage. Using a managed MySQL provider (e.g., PlanetScale, ClearDB) is recommended.
