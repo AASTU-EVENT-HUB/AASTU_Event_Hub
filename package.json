@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --config frontend/vite.config.js --root frontend",
-    "build": "vite build --config frontend/vite.config.js --root frontend",
-    "lint": "eslint frontend --ext .js,.jsx --config frontend/eslint.config.js",
-    "preview": "vite preview --config frontend/vite.config.js --root frontend"
+    "dev": "cd frontend && vite",
+    "build": "cd frontend && vite build",
+    "lint": "cd frontend && eslint . --ext .js,.jsx --config eslint.config.js",
+    "preview": "cd frontend && vite preview"
   },
   "dependencies": {
     "axios": "^1.16.1",
