@@ -1,39 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
 import NotificationEmailCard from '../../components/NotificationEmailCard';
-import { MOCK_EVENTS } from '../../data/mockData';
 import { useToast } from '../../context/ToastContext';
-
-const SENT_NOTIFICATIONS = [
-  { id: 1, event: 'AASTU Grand Hackathon 2024', type: 'Announcement', message: 'Registration is now open! Secure your spot before it fills up.', sentAt: 'May 12, 10:45 AM', recipients: 1240 },
-  { id: 2, event: 'Data Science Workshop', type: 'Reminder', message: 'Event starts tomorrow at 10:00 AM. Don\'t forget to bring your laptop!', sentAt: 'May 11, 3:00 PM', recipients: 58 },
-  { id: 3, event: 'Startup Pitch Night', type: 'Waitlist', message: 'A spot just opened up! You have 24 hours to claim it.', sentAt: 'May 10, 9:00 AM', recipients: 12 },
-];
+import { notificationsAPI, eventsAPI } from '../../services/api';
 
 export default function AdminNotificationsPage() {
   const toast = useToast();
   const [form, setForm] = useState({ eventId: '', type: 'Announcement', message: '' });
   const [showPreview, setShowPreview] = useState(false);
-  const [notifications, setNotifications] = useState(SENT_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
-  const handleSend = () => {
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [nRes, eRes] = await Promise.all([
+          notificationsAPI.getAll(),
+          eventsAPI.getAll({ limit: 100 }),
+        ]);
+        setNotifications(nRes.data.notifications || []);
+        setEvents(eRes.data.events || []);
+      } catch {
+        toast.error('Load failed', 'Could not load notifications');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const handleSend = async () => {
     if (!form.eventId || !form.message) {
       toast.warning('Missing fields', 'Please select an event and write a message');
       return;
     }
-    const event = MOCK_EVENTS.find(e => e.id === form.eventId);
-    setNotifications(prev => [{
-      id: Date.now(),
-      event: event?.title || 'Unknown Event',
-      type: form.type,
-      message: form.message,
-      sentAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      recipients: event?.registered || 0,
-    }, ...prev]);
-    setForm({ eventId: '', type: 'Announcement', message: '' });
-    toast.success('Notification sent!', `Sent to ${event?.registered || 0} registrants`);
+    const event = events.find(e => String(e.id) === String(form.eventId));
+    setSending(true);
+    try {
+      const sentAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const res = await notificationsAPI.create({
+        type: form.type.toLowerCase(),
+        title: `${form.type}: ${event?.title || 'Event'}`,
+        message: form.message,
+        icon: form.type === 'Announcement' ? '📢' : form.type === 'Reminder' ? '⏰' : form.type === 'Waitlist' ? '⏳' : '❌',
+        event: { id: event?.id, title: event?.title },
+        sentAt,
+      });
+      setNotifications(prev => [res.data.notification, ...prev]);
+      setForm({ eventId: '', type: 'Announcement', message: '' });
+      toast.success('Notification sent!', `Sent to ${event?.registration_count || 0} registrants`);
+    } catch {
+      toast.error('Send failed', 'Could not send notification');
+    } finally {
+      setSending(false);
+    }
   };
+
+  const selectedEvent = events.find(e => String(e.id) === String(form.eventId));
 
   return (
     <div className="app-layout">
@@ -59,8 +85,10 @@ export default function AdminNotificationsPage() {
                     onChange={e => setForm(f => ({ ...f, eventId: e.target.value }))}
                   >
                     <option value="">Choose an event...</option>
-                    {MOCK_EVENTS.map(e => (
-                      <option key={e.id} value={e.id}>{e.title} ({e.registered} registrants)</option>
+                    {events.map(e => (
+                      <option key={e.id} value={e.id}>
+                        {e.title} ({e.registration_count || 0} registrants)
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -103,8 +131,8 @@ export default function AdminNotificationsPage() {
                   <button className="btn btn-outline btn-sm" onClick={() => setShowPreview(true)}>
                     Preview Email
                   </button>
-                  <button className="btn btn-primary btn-sm" onClick={handleSend}>
-                    Send Notification
+                  <button className="btn btn-primary btn-sm" onClick={handleSend} disabled={sending}>
+                    {sending ? 'Sending...' : 'Send Notification'}
                   </button>
                 </div>
               </div>
@@ -112,36 +140,49 @@ export default function AdminNotificationsPage() {
               {/* Sent history */}
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid #1E2A45' }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Sent Notifications</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
+                    Sent Notifications {loading && <span style={{ fontSize: 12, color: '#64748B' }}>Loading...</span>}
+                  </h3>
                 </div>
                 <div className="table-wrapper">
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>Event</th>
+                        <th>Message</th>
                         <th>Type</th>
                         <th>Sent At</th>
-                        <th>Recipients</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       {notifications.map(n => (
                         <tr key={n.id}>
                           <td>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: '#fff', marginBottom: 2 }}>{n.event}</div>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: '#fff', marginBottom: 2 }}>{n.title}</div>
                             <div style={{ fontSize: 11, color: '#64748B', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {n.message}
                             </div>
                           </td>
                           <td>
-                            <span className={`badge ${n.type === 'Announcement' ? 'badge-blue' : n.type === 'Reminder' ? 'badge-amber' : n.type === 'Waitlist' ? 'badge-gold' : 'badge-red'}`} style={{ fontSize: 10 }}>
+                            <span className={`badge ${n.type === 'announcement' ? 'badge-blue' : n.type === 'reminder' ? 'badge-amber' : n.type === 'waitlist' ? 'badge-gold' : 'badge-red'}`} style={{ fontSize: 10 }}>
                               {n.type}
                             </span>
                           </td>
-                          <td style={{ fontSize: 12 }}>{n.sentAt}</td>
-                          <td style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{n.recipients}</td>
+                          <td style={{ fontSize: 12 }}>{n.sentAt || n.time}</td>
+                          <td>
+                            <button
+                              style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 14 }}
+                              onClick={async () => {
+                                await notificationsAPI.delete(n.id);
+                                setNotifications(prev => prev.filter(x => x.id !== n.id));
+                              }}
+                            >×</button>
+                          </td>
                         </tr>
                       ))}
+                      {!loading && notifications.length === 0 && (
+                        <tr><td colSpan={4} style={{ textAlign: 'center', color: '#64748B', padding: '24px' }}>No notifications sent yet</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -152,9 +193,9 @@ export default function AdminNotificationsPage() {
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 12 }}>Email Preview</div>
               <NotificationEmailCard
-                eventName={MOCK_EVENTS.find(e => e.id === form.eventId)?.title || 'AI Ethics Workshop'}
-                eventDate="Nov 15, 2024"
-                eventTime="10:00 AM"
+                eventName={selectedEvent?.title || 'Select an event'}
+                eventDate={selectedEvent?.start_date ? new Date(selectedEvent.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}
+                eventTime={selectedEvent?.start_date ? new Date(selectedEvent.start_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
                 hoursLeft={24}
               />
             </div>
@@ -171,9 +212,9 @@ export default function AdminNotificationsPage() {
               <button className="modal-close" onClick={() => setShowPreview(false)}>×</button>
             </div>
             <NotificationEmailCard
-              eventName={MOCK_EVENTS.find(e => e.id === form.eventId)?.title}
-              eventDate="Nov 15, 2024"
-              eventTime="10:00 AM"
+              eventName={selectedEvent?.title}
+              eventDate="TBD"
+              eventTime="TBD"
             />
           </div>
         </div>

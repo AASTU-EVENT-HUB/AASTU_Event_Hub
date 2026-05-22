@@ -1,17 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
 import { useToast } from '../../context/ToastContext';
-
-const MOCK_USERS = [
-  { id: 'u1', name: 'Selam Balcha', email: 'selam@aastu.edu.et', studentId: 'AAU-2021-CS-042', department: 'Computer Science', role: 'student', status: 'active', joinedAt: 'Sep 1, 2021', eventsAttended: 24, avatar: 'https://i.pravatar.cc/40?img=1' },
-  { id: 'u2', name: 'Henok Tadesse', email: 'henok@aastu.edu.et', studentId: 'AAU-2020-SE-018', department: 'Software Engineering', role: 'student', status: 'active', joinedAt: 'Sep 1, 2020', eventsAttended: 18, avatar: 'https://i.pravatar.cc/40?img=3' },
-  { id: 'u3', name: 'Dr. Abebe Bekele', email: 'abebe@aastu.edu.et', studentId: 'FAC-001', department: 'Mechatronics', role: 'organizer', status: 'active', joinedAt: 'Jan 15, 2019', eventsAttended: 0, avatar: 'https://i.pravatar.cc/40?img=5' },
-  { id: 'u4', name: 'Tigist Alemu', email: 'tigist@aastu.edu.et', studentId: 'AAU-2022-EE-031', department: 'Electrical Engineering', role: 'student', status: 'active', joinedAt: 'Sep 1, 2022', eventsAttended: 12, avatar: 'https://i.pravatar.cc/40?img=7' },
-  { id: 'u5', name: 'Dawit Bekele', email: 'dawit@aastu.edu.et', studentId: 'AAU-2021-ME-055', department: 'Mechanical Engineering', role: 'student', status: 'suspended', joinedAt: 'Sep 1, 2021', eventsAttended: 5, avatar: 'https://i.pravatar.cc/40?img=9' },
-  { id: 'u6', name: 'Sara Haile', email: 'sara@aastu.edu.et', studentId: 'AAU-2023-CS-012', department: 'Computer Science', role: 'student', status: 'active', joinedAt: 'Sep 1, 2023', eventsAttended: 3, avatar: 'https://i.pravatar.cc/40?img=11' },
-  { id: 'u7', name: 'Mekdes A.', email: 'admin@aastu.edu.et', studentId: 'ADM-001', department: 'Administration', role: 'admin', status: 'active', joinedAt: 'Jan 1, 2020', eventsAttended: 0, avatar: 'https://i.pravatar.cc/40?img=13' },
-];
+import { usersAPI } from '../../services/api';
 
 const ROLE_CONFIG = {
   student: { color: '#3B6FFF', bg: 'rgba(59,111,255,0.15)', label: 'Student' },
@@ -21,32 +12,57 @@ const ROLE_CONFIG = {
 
 export default function AdminUsersPage() {
   const toast = useToast();
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  const filtered = users.filter(u => {
-    const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()) || u.studentId.toLowerCase().includes(search.toLowerCase());
-    const matchRole = filterRole === 'all' || u.role === filterRole;
-    const matchStatus = filterStatus === 'all' || u.status === filterStatus;
-    return matchSearch && matchRole && matchStatus;
-  });
-
-  const handleRoleChange = (userId, newRole) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-    toast.success('Role updated', `User role changed to ${newRole}`);
-    setSelectedUser(prev => prev ? { ...prev, role: newRole } : null);
+  const loadUsers = async () => {
+    try {
+      const res = await usersAPI.getAll({ search, role: filterRole });
+      setUsers(res.data.users || []);
+    } catch {
+      toast.error('Load failed', 'Could not load users');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleToggleStatus = (userId) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: u.status === 'active' ? 'suspended' : 'active' } : u));
-    const user = users.find(u => u.id === userId);
-    toast.success(user?.status === 'active' ? 'Account suspended' : 'Account reactivated', user?.name);
-    setConfirmAction(null);
-    setSelectedUser(prev => prev ? { ...prev, status: prev.status === 'active' ? 'suspended' : 'active' } : null);
+  useEffect(() => { loadUsers(); }, []);
+
+  // Re-filter client-side for instant search feedback
+  const filtered = users.filter(u => {
+    const matchSearch = !search ||
+      u.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase()) ||
+      u.studentId?.toLowerCase().includes(search.toLowerCase());
+    const matchRole = filterRole === 'all' || u.role === filterRole;
+    return matchSearch && matchRole;
+  });
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await usersAPI.updateRole(userId, newRole);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      setSelectedUser(prev => prev ? { ...prev, role: newRole } : null);
+      toast.success('Role updated', `User role changed to ${newRole}`);
+    } catch {
+      toast.error('Update failed', 'Could not update role');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      await usersAPI.delete(userId);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      setConfirmAction(null);
+      setSelectedUser(null);
+      toast.success('User deleted', 'User account removed');
+    } catch {
+      toast.error('Delete failed', 'Could not delete user');
+    }
   };
 
   return (
@@ -59,8 +75,11 @@ export default function AdminUsersPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>User Management</h1>
-              <p style={{ fontSize: 13, color: '#64748B' }}>{users.length} total users · {users.filter(u => u.status === 'active').length} active</p>
+              <p style={{ fontSize: 13, color: '#64748B' }}>
+                {loading ? 'Loading...' : `${users.length} total users`}
+              </p>
             </div>
+            <button className="btn btn-outline btn-sm" onClick={loadUsers}>↻ Refresh</button>
           </div>
 
           {/* Filters */}
@@ -78,13 +97,7 @@ export default function AdminUsersPage() {
             <select className="form-select" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ width: 'auto' }}>
               <option value="all">All Roles</option>
               <option value="student">Students</option>
-              <option value="organizer">Organizers</option>
               <option value="admin">Admins</option>
-            </select>
-            <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 'auto' }}>
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
             </select>
           </div>
 
@@ -99,14 +112,13 @@ export default function AdminUsersPage() {
                       <th>Student ID</th>
                       <th>Department</th>
                       <th>Role</th>
-                      <th>Status</th>
                       <th>Events</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map(u => {
-                      const rc = ROLE_CONFIG[u.role];
+                      const rc = ROLE_CONFIG[u.role] || ROLE_CONFIG.student;
                       return (
                         <tr
                           key={u.id}
@@ -129,11 +141,6 @@ export default function AdminUsersPage() {
                               {rc.label}
                             </span>
                           </td>
-                          <td>
-                            <span className={`badge ${u.status === 'active' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: 10 }}>
-                              {u.status === 'active' ? 'Active' : 'Suspended'}
-                            </span>
-                          </td>
                           <td style={{ fontSize: 13, color: '#fff', fontWeight: 600 }}>{u.eventsAttended}</td>
                           <td>
                             <div style={{ display: 'flex', gap: 6 }}>
@@ -144,16 +151,9 @@ export default function AdminUsersPage() {
                               >View</button>
                               <button
                                 className="btn btn-sm"
-                                style={{
-                                  background: u.status === 'active' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
-                                  border: `1px solid ${u.status === 'active' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
-                                  color: u.status === 'active' ? '#EF4444' : '#22C55E',
-                                  padding: '4px 8px', fontSize: 11,
-                                }}
+                                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '4px 8px', fontSize: 11 }}
                                 onClick={e => { e.stopPropagation(); setConfirmAction(u); }}
-                              >
-                                {u.status === 'active' ? 'Suspend' : 'Reactivate'}
-                              </button>
+                              >Delete</button>
                             </div>
                           </td>
                         </tr>
@@ -162,9 +162,9 @@ export default function AdminUsersPage() {
                   </tbody>
                 </table>
               </div>
-              {filtered.length === 0 && (
+              {!loading && filtered.length === 0 && (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#64748B', fontSize: 14 }}>
-                  No users match your search
+                  {users.length === 0 ? 'No users registered yet' : 'No users match your search'}
                 </div>
               )}
             </div>
@@ -178,19 +178,16 @@ export default function AdminUsersPage() {
                     <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: 18 }}>×</button>
                   </div>
 
-                  {/* Avatar */}
                   <div style={{ textAlign: 'center', marginBottom: 16 }}>
                     <img src={selectedUser.avatar} alt={selectedUser.name} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '3px solid #1E2A45', marginBottom: 8 }} />
                     <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{selectedUser.name}</div>
                     <div style={{ fontSize: 12, color: '#64748B' }}>{selectedUser.email}</div>
                   </div>
 
-                  {/* Info */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                     {[
                       { label: 'Student ID', value: selectedUser.studentId },
                       { label: 'Department', value: selectedUser.department },
-                      { label: 'Joined', value: selectedUser.joinedAt },
                       { label: 'Events Attended', value: selectedUser.eventsAttended },
                     ].map(row => (
                       <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
@@ -209,18 +206,16 @@ export default function AdminUsersPage() {
                       onChange={e => handleRoleChange(selectedUser.id, e.target.value)}
                     >
                       <option value="student">Student</option>
-                      <option value="organizer">Organizer</option>
                       <option value="admin">Admin</option>
                     </select>
                   </div>
 
-                  {/* Status toggle */}
                   <button
-                    className={`btn btn-full btn-sm ${selectedUser.status === 'active' ? 'btn-danger' : 'btn-primary'}`}
+                    className="btn btn-full btn-sm"
+                    style={{ background: '#EF4444', borderColor: '#EF4444', color: '#fff' }}
                     onClick={() => setConfirmAction(selectedUser)}
-                    style={{ background: selectedUser.status === 'active' ? '#EF4444' : '#22C55E', borderColor: selectedUser.status === 'active' ? '#EF4444' : '#22C55E' }}
                   >
-                    {selectedUser.status === 'active' ? '🚫 Suspend Account' : '✓ Reactivate Account'}
+                    🗑 Delete Account
                   </button>
                 </div>
               </div>
@@ -229,30 +224,24 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Confirm action modal */}
+      {/* Confirm delete modal */}
       {confirmAction && (
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: 380 }}>
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>
-                {confirmAction.status === 'active' ? '🚫' : '✓'}
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 8 }}>
-                {confirmAction.status === 'active' ? 'Suspend Account?' : 'Reactivate Account?'}
-              </h3>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🗑</div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Delete Account?</h3>
               <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 24 }}>
-                {confirmAction.status === 'active'
-                  ? `${confirmAction.name} will lose access to the platform until reactivated.`
-                  : `${confirmAction.name} will regain full access to the platform.`}
+                {confirmAction.name}'s account and all their registrations will be permanently deleted.
               </p>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                 <button className="btn btn-outline btn-sm" onClick={() => setConfirmAction(null)}>Cancel</button>
                 <button
                   className="btn btn-sm"
-                  style={{ background: confirmAction.status === 'active' ? '#EF4444' : '#22C55E', color: '#fff', border: 'none' }}
-                  onClick={() => handleToggleStatus(confirmAction.id)}
+                  style={{ background: '#EF4444', color: '#fff', border: 'none' }}
+                  onClick={() => handleDeleteUser(confirmAction.id)}
                 >
-                  Confirm
+                  Delete
                 </button>
               </div>
             </div>

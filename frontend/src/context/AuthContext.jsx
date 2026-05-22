@@ -103,8 +103,18 @@ export function AuthProvider({ children }) {
     updateUser({ onboardingComplete: true, interests });
   };
 
+  // Used by Google OAuth callback page
+  const loginWithToken = (userToken, userData) => {
+    const newUser = { ...userData, onboardingComplete: !userData.isFirstLogin };
+    setUser(newUser);
+    setToken(userToken);
+    localStorage.setItem('aastu_user', JSON.stringify(newUser));
+    localStorage.setItem('aastu_token', userToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateUser, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateUser, completeOnboarding, loginWithToken }}>
       {children}
     </AuthContext.Provider>
   );

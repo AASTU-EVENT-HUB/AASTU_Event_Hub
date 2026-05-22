@@ -40,8 +40,8 @@ AASTU_Event_Hub/
 ```bash
 cd backend
 npm install
-cp .env.example .env    # Set up database credentials
-npm run dev             # Starts on http://localhost:5000
+npm run seed   # Creates admin + student test users
+npm run dev    # Starts on http://localhost:5000
 ```
 
 ### 2. Start the Frontend (from root)

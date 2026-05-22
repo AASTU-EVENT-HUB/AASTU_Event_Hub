@@ -1,56 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
 import { useToast } from '../../context/ToastContext';
 import { useNotifications } from '../../context/NotificationContext';
-
-const INITIAL_PROPOSALS = [
-  {
-    id: 'p1', title: 'AI & Machine Learning Bootcamp', category: 'Workshops',
-    organizer: 'Dr. Abebe Bekele', dept: 'Computer Science',
-    venue: 'Lab Building, Room 302', date: 'Nov 20, 2024', time: '9:00 AM',
-    expectedAttendance: 80, status: 'under_review',
-    description: 'A 3-day intensive bootcamp covering supervised learning, neural networks, and deployment.',
-    safetyNotes: 'Standard classroom setup. No special safety requirements.',
-    submittedAt: 'May 12, 10:45 AM',
-    banner: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80',
-    tags: ['AI', 'ML', 'Workshop'],
-  },
-  {
-    id: 'p2', title: 'Grand Innovation Expo 2024', category: 'Tech',
-    organizer: 'Informatics Society', dept: 'Software Engineering',
-    venue: 'Main Exhibition Hall', date: 'Dec 5, 2024', time: '10:00 AM',
-    expectedAttendance: 500, status: 'submitted',
-    description: 'Annual showcase of student innovation projects across all engineering departments.',
-    safetyNotes: 'Large crowd expected. Security and crowd management plan attached.',
-    submittedAt: 'May 12, 09:12 AM',
-    banner: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80',
-    tags: ['Exhibition', 'Innovation', 'Public'],
-  },
-  {
-    id: 'p3', title: 'Women in Tech Conference', category: 'Networking',
-    organizer: 'She Codes AASTU', dept: 'Computer Science',
-    venue: 'Conference Center A', date: 'Nov 28, 2024', time: '8:30 AM',
-    expectedAttendance: 200, status: 'submitted',
-    description: 'Annual conference celebrating women in technology with keynotes, panels, and networking.',
-    safetyNotes: 'Standard conference setup.',
-    submittedAt: 'May 11, 3:00 PM',
-    banner: 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=600&q=80',
-    tags: ['Women', 'Tech', 'Networking'],
-  },
-  {
-    id: 'p4', title: 'Robotics Club Open Day', category: 'Tech',
-    organizer: 'Robotics Club', dept: 'Mechanical Engineering',
-    venue: 'Mechanical Wing Lab', date: 'Nov 15, 2024', time: '2:00 PM',
-    expectedAttendance: 120, status: 'rejected',
-    rejectionReason: 'Venue capacity exceeded. Please select a larger venue or reduce expected attendance.',
-    description: 'Open day for students to see and interact with student-built robots.',
-    safetyNotes: 'Safety barriers required around robot demonstration areas.',
-    submittedAt: 'May 10, 11:00 AM',
-    banner: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80',
-    tags: ['Robotics', 'Demo'],
-  },
-];
+import { proposalsAPI } from '../../services/api';
 
 const STATUS_CONFIG = {
   draft: { label: 'Draft', color: '#64748B', bg: 'rgba(100,116,139,0.15)' },
@@ -64,7 +17,8 @@ const STATUS_CONFIG = {
 export default function AdminApprovalPage() {
   const toast = useToast();
   const { addNotification } = useNotifications();
-  const [proposals, setProposals] = useState(INITIAL_PROPOSALS);
+  const [proposals, setProposals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [rejectModal, setRejectModal] = useState(null);
@@ -72,31 +26,43 @@ export default function AdminApprovalPage() {
   const [changesModal, setChangesModal] = useState(null);
   const [changesNote, setChangesNote] = useState('');
 
+  useEffect(() => {
+    proposalsAPI.getAll()
+      .then(res => setProposals(res.data.proposals || []))
+      .catch(() => toast.error('Load failed', 'Could not load proposals'))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filtered = proposals.filter(p => filterStatus === 'all' || p.status === filterStatus);
 
-  const updateStatus = (id, status, extra = {}) => {
-    setProposals(prev => prev.map(p => p.id === id ? { ...p, status, ...extra } : p));
+  const updateStatus = async (id, status, extra = {}) => {
+    try {
+      const res = await proposalsAPI.update(id, { status, ...extra });
+      setProposals(prev => prev.map(p => p.id === id ? res.data.proposal : p));
+    } catch {
+      toast.error('Update failed', 'Could not update proposal status');
+    }
   };
 
-  const handleApprove = (p) => {
-    updateStatus(p.id, 'approved');
+  const handleApprove = async (p) => {
+    await updateStatus(p.id, 'approved');
     setSelected(null);
     toast.success('Event Approved', `"${p.title}" is now live on the platform`);
-    addNotification({ type: 'approval', title: 'Event Approved', message: `"${p.title}" has been approved and is now public`, icon: '✅' });
+    addNotification({ type: 'approval', title: 'Event Approved', message: `"${p.title}" has been approved`, icon: '✅' });
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectReason.trim()) { toast.error('Reason required', 'Please provide a rejection reason'); return; }
-    updateStatus(rejectModal.id, 'rejected', { rejectionReason: rejectReason });
+    await updateStatus(rejectModal.id, 'rejected', { rejectionReason: rejectReason });
     setRejectModal(null);
     setRejectReason('');
     setSelected(null);
-    toast.info('Event Rejected', `Organizer has been notified`);
+    toast.info('Event Rejected', 'Organizer has been notified');
   };
 
-  const handleRequestChanges = () => {
+  const handleRequestChanges = async () => {
     if (!changesNote.trim()) { toast.error('Note required', 'Please describe what changes are needed'); return; }
-    updateStatus(changesModal.id, 'changes_requested', { changesNote });
+    await updateStatus(changesModal.id, 'changes_requested', { changesNote });
     setChangesModal(null);
     setChangesNote('');
     setSelected(null);
@@ -116,7 +82,7 @@ export default function AdminApprovalPage() {
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>Event Approval Queue</h1>
               <p style={{ fontSize: 13, color: '#64748B' }}>
-                {pendingCount} proposal{pendingCount !== 1 ? 's' : ''} awaiting review
+                {loading ? 'Loading...' : `${pendingCount} proposal${pendingCount !== 1 ? 's' : ''} awaiting review`}
               </p>
             </div>
           </div>
@@ -148,7 +114,7 @@ export default function AdminApprovalPage() {
             {/* Proposals list */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {filtered.map(p => {
-                const sc = STATUS_CONFIG[p.status];
+                const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG.submitted;
                 return (
                   <div
                     key={p.id}
@@ -160,10 +126,10 @@ export default function AdminApprovalPage() {
                       cursor: 'pointer', transition: 'all 0.15s',
                       display: 'flex', gap: 16, alignItems: 'flex-start',
                     }}
-                    onMouseEnter={e => { if (selected !== p.id) e.currentTarget.style.borderColor = '#2A3A55'; }}
-                    onMouseLeave={e => { if (selected !== p.id) e.currentTarget.style.borderColor = '#1E2A45'; }}
                   >
-                    <img src={p.banner} alt={p.title} style={{ width: 72, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                    {p.banner && (
+                      <img src={p.banner} alt={p.title} style={{ width: 72, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{p.title}</div>
@@ -173,12 +139,12 @@ export default function AdminApprovalPage() {
                         }}>{sc.label}</span>
                       </div>
                       <div style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>
-                        {p.organizer} · {p.dept}
+                        {p.organizer} · {p.dept || p.department}
                       </div>
                       <div style={{ display: 'flex', gap: 12, fontSize: 11, color: '#94A3B8' }}>
-                        <span>📅 {p.date}</span>
-                        <span>📍 {p.venue}</span>
-                        <span>👥 {p.expectedAttendance} expected</span>
+                        {p.date && <span>📅 {p.date}</span>}
+                        {p.venue && <span>📍 {p.venue}</span>}
+                        {p.expectedAttendance && <span>👥 {p.expectedAttendance} expected</span>}
                       </div>
                       {p.status === 'rejected' && p.rejectionReason && (
                         <div style={{ marginTop: 6, fontSize: 11, color: '#EF4444', background: 'rgba(239,68,68,0.08)', borderRadius: 6, padding: '4px 8px' }}>
@@ -190,7 +156,7 @@ export default function AdminApprovalPage() {
                 );
               })}
 
-              {filtered.length === 0 && (
+              {!loading && filtered.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '60px 0' }}>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>No proposals here</div>
@@ -203,11 +169,11 @@ export default function AdminApprovalPage() {
             {selected && (() => {
               const p = proposals.find(x => x.id === selected);
               if (!p) return null;
-              const sc = STATUS_CONFIG[p.status];
+              const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG.submitted;
               return (
                 <div style={{ position: 'sticky', top: 80 }}>
                   <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <img src={p.banner} alt={p.title} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                    {p.banner && <img src={p.banner} alt={p.title} style={{ width: '100%', height: 160, objectFit: 'cover' }} />}
                     <div style={{ padding: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                         <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', flex: 1 }}>{p.title}</h3>
@@ -217,13 +183,13 @@ export default function AdminApprovalPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
                         {[
                           { icon: '👤', label: 'Organizer', value: p.organizer },
-                          { icon: '🏛', label: 'Department', value: p.dept },
-                          { icon: '📅', label: 'Date & Time', value: `${p.date} at ${p.time}` },
-                          { icon: '📍', label: 'Venue', value: p.venue },
-                          { icon: '👥', label: 'Expected', value: `${p.expectedAttendance} attendees` },
+                          { icon: '🏛', label: 'Department', value: p.dept || p.department },
+                          p.date && { icon: '📅', label: 'Date & Time', value: `${p.date}${p.time ? ` at ${p.time}` : ''}` },
+                          p.venue && { icon: '📍', label: 'Venue', value: p.venue },
+                          p.expectedAttendance && { icon: '👥', label: 'Expected', value: `${p.expectedAttendance} attendees` },
                           { icon: '🏷', label: 'Category', value: p.category },
-                          { icon: '🕐', label: 'Submitted', value: p.submittedAt },
-                        ].map(row => (
+                          p.submittedAt && { icon: '🕐', label: 'Submitted', value: p.submittedAt },
+                        ].filter(Boolean).map(row => (
                           <div key={row.label} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
                             <span style={{ color: '#64748B', width: 80, flexShrink: 0 }}>{row.icon} {row.label}</span>
                             <span style={{ color: '#fff' }}>{row.value}</span>
@@ -231,20 +197,25 @@ export default function AdminApprovalPage() {
                         ))}
                       </div>
 
-                      <div style={{ marginBottom: 14 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Description</div>
-                        <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>{p.description}</p>
-                      </div>
+                      {p.description && (
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Description</div>
+                          <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>{p.description}</p>
+                        </div>
+                      )}
 
-                      <div style={{ marginBottom: 16 }}>
-                        <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Safety Notes</div>
-                        <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>{p.safetyNotes}</p>
-                      </div>
+                      {p.safetyNotes && (
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Safety Notes</div>
+                          <p style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>{p.safetyNotes}</p>
+                        </div>
+                      )}
 
-                      {/* Tags */}
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                        {p.tags.map(tag => <span key={tag} className="badge badge-blue" style={{ fontSize: 10 }}>{tag}</span>)}
-                      </div>
+                      {p.tags && p.tags.length > 0 && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                          {p.tags.map(tag => <span key={tag} className="badge badge-blue" style={{ fontSize: 10 }}>{tag}</span>)}
+                        </div>
+                      )}
 
                       {/* Actions */}
                       {['submitted', 'under_review'].includes(p.status) && (
@@ -328,7 +299,7 @@ export default function AdminApprovalPage() {
               <textarea
                 className="form-input"
                 rows={4}
-                placeholder="e.g. Please add a detailed safety plan and confirm catering arrangements..."
+                placeholder="e.g. Please add a detailed safety plan..."
                 value={changesNote}
                 onChange={e => setChangesNote(e.target.value)}
                 style={{ resize: 'vertical' }}

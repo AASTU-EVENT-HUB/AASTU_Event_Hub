@@ -23,6 +23,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import OnboardingPage from './pages/OnboardingPage';
+import GoogleCallbackPage from './pages/auth/GoogleCallbackPage';
 
 // Student dashboard
 import StudentDashboard from './pages/dashboard/StudentDashboard';
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
               {/* ── Onboarding ── */}
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />

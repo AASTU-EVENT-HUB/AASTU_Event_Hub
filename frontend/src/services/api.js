@@ -4,12 +4,10 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Add token to all requests if it exists
+// Auto-inject JWT token from localStorage into every request
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('aastu_token');
   if (token) {
@@ -25,13 +23,17 @@ export const authAPI = {
   register: (data) => apiClient.post('/auth/register', data),
   login: (email, password) => apiClient.post('/auth/login', { email, password }),
   getCurrentUser: () => apiClient.get('/auth/me'),
+  googleLogin: () => {
+    // Redirect browser to backend Google OAuth flow
+    window.location.href = `${API_BASE}/auth/google`;
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Events APIs
 // ─────────────────────────────────────────────────────────────────────────────
 export const eventsAPI = {
-  getAll: () => apiClient.get('/events'),
+  getAll: (params = {}) => apiClient.get('/events', { params }),
   getById: (id) => apiClient.get(`/events/${id}`),
   create: (data) => apiClient.post('/events', data),
   update: (id, data) => apiClient.put(`/events/${id}`, data),
@@ -42,8 +44,7 @@ export const eventsAPI = {
 // Registration APIs
 // ─────────────────────────────────────────────────────────────────────────────
 export const registrationAPI = {
-  registerForEvent: (eventId) =>
-    apiClient.post(`/registrations/${eventId}`),
+  registerForEvent: (eventId) => apiClient.post(`/registrations/${eventId}`),
   getMyRegistrations: () => apiClient.get('/registrations'),
 };
 
@@ -52,17 +53,44 @@ export const registrationAPI = {
 // ─────────────────────────────────────────────────────────────────────────────
 export const notificationsAPI = {
   getAll: () => apiClient.get('/notifications'),
-  markAsRead: (id) => apiClient.put(`/notifications/${id}`, { read: true }),
+  create: (data) => apiClient.post('/notifications', data),
+  markRead: (id) => apiClient.post(`/notifications/${id}/read`),
+  delete: (id) => apiClient.delete(`/notifications/${id}`),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Proposals APIs
 // ─────────────────────────────────────────────────────────────────────────────
 export const proposalsAPI = {
-  create: (data) => apiClient.post('/proposals', data),
   getAll: () => apiClient.get('/proposals'),
-  approve: (id) => apiClient.put(`/proposals/${id}/approve`),
-  reject: (id) => apiClient.put(`/proposals/${id}/reject`),
+  create: (data) => apiClient.post('/proposals', data),
+  update: (id, data) => apiClient.put(`/proposals/${id}`, data),
+  delete: (id) => apiClient.delete(`/proposals/${id}`),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Check-in APIs
+// ─────────────────────────────────────────────────────────────────────────────
+export const checkinAPI = {
+  scan: (qrData, eventId) => apiClient.post('/checkin/scan', { qrData, eventId }),
+  getStats: (eventId) => apiClient.get(`/checkin/${eventId}/stats`),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Analytics APIs
+// ─────────────────────────────────────────────────────────────────────────────
+export const analyticsAPI = {
+  getAdmin: () => apiClient.get('/analytics/admin'),
+  getStudent: () => apiClient.get('/analytics/student'),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Users APIs (admin)
+// ─────────────────────────────────────────────────────────────────────────────
+export const usersAPI = {
+  getAll: (params = {}) => apiClient.get('/users', { params }),
+  updateRole: (id, role) => apiClient.put(`/users/${id}/role`, { role }),
+  delete: (id) => apiClient.delete(`/users/${id}`),
 };
 
 export default apiClient;
