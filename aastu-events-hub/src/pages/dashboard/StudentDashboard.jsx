@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
 import EventCard from '../../components/EventCard';
@@ -7,23 +8,38 @@ import WaitlistBadge from '../../components/WaitlistBadge';
 import QRCodeCard from '../../components/QRCodeCard';
 import { MOCK_EVENTS, MOCK_REGISTRATIONS, MOCK_RECOMMENDATIONS, getEventStatus } from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const TABS = ['Overview', 'My Events', 'Waitlisted', 'Profile'];
 
 export default function StudentDashboard({ defaultTab = 'Overview' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [thumbFeedback, setThumbFeedback] = useState({});
   const [showQR, setShowQR] = useState(null);
+  const [waitlistedEvents, setWaitlistedEvents] = useState(
+    MOCK_REGISTRATIONS
+      .filter(r => r.status === 'waitlist')
+      .map(r => ({ ...r, event: MOCK_EVENTS.find(e => e.id === r.eventId) }))
+      .filter(r => r.event)
+  );
+
+  const handleLeaveWaitlist = async (eventId) => {
+    try {
+      try { await axios.delete(`${API_BASE}/waitlist/${eventId}`); } catch { /* mock */ }
+      setWaitlistedEvents(prev => prev.filter(r => r.eventId !== eventId));
+      toast.success('Removed from waitlist', 'You have left the waitlist.');
+    } catch {
+      toast.error('Error', 'Could not leave waitlist.');
+    }
+  };
 
   const registeredEvents = MOCK_REGISTRATIONS
     .filter(r => r.status === 'registered' || r.status === 'attended')
-    .map(r => ({ ...r, event: MOCK_EVENTS.find(e => e.id === r.eventId) }))
-    .filter(r => r.event);
-
-  const waitlistedEvents = MOCK_REGISTRATIONS
-    .filter(r => r.status === 'waitlist')
     .map(r => ({ ...r, event: MOCK_EVENTS.find(e => e.id === r.eventId) }))
     .filter(r => r.event);
 
@@ -93,6 +109,31 @@ export default function StudentDashboard({ defaultTab = 'Overview' }) {
               {/* OVERVIEW TAB */}
               {activeTab === 'Overview' && (
                 <div className="fade-in">
+                  {/* Propose Event CTA */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(59,111,255,0.12) 0%, rgba(107,70,193,0.12) 100%)',
+                    border: '1px solid rgba(59,111,255,0.25)',
+                    borderRadius: 12, padding: '14px 18px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    marginBottom: 24, gap: 12,
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 2 }}>
+                        ✨ Have an event idea?
+                      </div>
+                      <div style={{ fontSize: 12, color: '#94A3B8' }}>
+                        Submit a proposal and get it approved by the admin team
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ flexShrink: 0, borderRadius: 8 }}
+                      onClick={() => navigate('/propose-event')}
+                    >
+                      Propose Event →
+                    </button>
+                  </div>
+
                   {/* Upcoming registered */}
                   {upcomingRegistered.length > 0 && (
                     <div style={{ marginBottom: 32 }}>
@@ -304,6 +345,7 @@ export default function StudentDashboard({ defaultTab = 'Overview' }) {
                           </div>
                           <button
                             style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 12, cursor: 'pointer' }}
+                            onClick={() => handleLeaveWaitlist(r.eventId)}
                           >
                             Leave Waitlist
                           </button>

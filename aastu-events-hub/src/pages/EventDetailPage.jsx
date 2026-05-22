@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
 import EventCard from '../components/EventCard';
@@ -10,6 +11,8 @@ import StatusBadge from '../components/StatusBadge';
 import { MOCK_EVENTS, MOCK_REGISTRATIONS, getEventStatus } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function EventDetailPage() {
   const { id } = useParams();
@@ -22,7 +25,32 @@ export default function EventDetailPage() {
   const fillPct = Math.round((event.registered / event.capacity) * 100);
   const isFull = event.registered >= event.capacity;
 
-  const userReg = user ? MOCK_REGISTRATIONS.find(r => r.eventId === id && r.userId === user.id) : null;
+  // Load real registration status; fall back to mock
+  const mockReg = user ? MOCK_REGISTRATIONS.find(r => r.eventId === id && r.userId === user.id) : null;
+  const [userReg, setUserReg] = useState(mockReg);
+  const [waitlistCount, setWaitlistCount] = useState(event.waitlist || 0);
+
+  useEffect(() => {
+    if (!user) return;
+    // Fetch real registration status
+    axios.get(`${API_BASE}/registrations/${id}/my-status`)
+      .then(res => setUserReg(res.data))
+      .catch(() => { /* keep mock */ });
+    // Fetch waitlist count
+    axios.get(`${API_BASE}/waitlist/${id}/count`)
+      .then(res => setWaitlistCount(res.data?.count ?? event.waitlist ?? 0))
+      .catch(() => { /* keep mock */ });
+  }, [id, user]);
+
+  const handleLeaveWaitlist = async () => {
+    try {
+      try { await axios.delete(`${API_BASE}/waitlist/${id}`); } catch { /* mock */ }
+      setUserReg(null);
+      toast.success('Removed from waitlist', 'You have left the waitlist.');
+    } catch {
+      toast.error('Error', 'Could not leave waitlist.');
+    }
+  };
   const [activeTab, setActiveTab] = useState('about');
   const [faqOpen, setFaqOpen] = useState({});
   const [similarIdx, setSimilarIdx] = useState(0);
@@ -350,7 +378,7 @@ export default function EventDetailPage() {
                   <p style={{ fontSize: 12, color: '#94A3B8', textAlign: 'center', marginTop: 12, marginBottom: 12 }}>
                     We'll notify you automatically if a spot opens
                   </p>
-                  <button className="btn btn-outline btn-full btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }}>
+                  <button className="btn btn-outline btn-full btn-sm" style={{ color: '#EF4444', borderColor: '#EF4444' }} onClick={handleLeaveWaitlist}>
                     Leave Waitlist
                   </button>
                 </div>
@@ -360,7 +388,7 @@ export default function EventDetailPage() {
                     <span className="badge badge-red">Event Full</span>
                   </div>
                   <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>
-                    {event.waitlist} people already on waitlist
+                    {waitlistCount} people already on waitlist
                   </p>
                   <button className="btn btn-outline-gold btn-full" onClick={handleWaitlist} style={{ marginBottom: 8 }}>
                     Join Waitlist

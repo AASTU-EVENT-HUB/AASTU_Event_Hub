@@ -9,8 +9,14 @@ import HomePage from './pages/HomePage';
 import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
 import RegistrationPage from './pages/RegistrationPage';
+import RegistrationConfirmationPage from './pages/RegistrationConfirmationPage';
+import WaitlistConfirmationPage from './pages/WaitlistConfirmationPage';
 import TeamRegistrationPage from './pages/TeamRegistrationPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ProposeEventPage from './pages/ProposeEventPage';
+import HelpPage from './pages/HelpPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage';
@@ -20,6 +26,9 @@ import OnboardingPage from './pages/OnboardingPage';
 
 // Student dashboard
 import StudentDashboard from './pages/dashboard/StudentDashboard';
+import StudentTicketsPage from './pages/dashboard/StudentTicketsPage';
+import StudentSettingsPage from './pages/dashboard/StudentSettingsPage';
+import StudentAnalyticsPage from './pages/dashboard/StudentAnalyticsPage';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -33,6 +42,7 @@ import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminApprovalPage from './pages/admin/AdminApprovalPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminAuditPage from './pages/admin/AdminAuditPage';
+import AdminTicketsPage from './pages/admin/AdminTicketsPage';
 
 export default function App() {
   return (
@@ -45,6 +55,7 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/:id" element={<EventDetailPage />} />
+              <Route path="/help" element={<HelpPage />} />
 
               {/* ── Auth ── */}
               <Route path="/login" element={<LoginPage />} />
@@ -52,52 +63,29 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
               {/* ── Onboarding ── */}
-              <Route path="/onboarding" element={
-                <ProtectedRoute>
-                  <OnboardingPage />
-                </ProtectedRoute>
-              } />
+              <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
               {/* ── Registration ── */}
-              <Route path="/events/:id/register" element={
-                <ProtectedRoute>
-                  <RegistrationPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/events/:id/team" element={
-                <ProtectedRoute>
-                  <TeamRegistrationPage />
-                </ProtectedRoute>
-              } />
+              <Route path="/events/:id/register" element={<ProtectedRoute><RegistrationPage /></ProtectedRoute>} />
+              <Route path="/events/:id/confirmation" element={<ProtectedRoute><RegistrationConfirmationPage /></ProtectedRoute>} />
+              <Route path="/events/:id/waitlist-confirmation" element={<ProtectedRoute><WaitlistConfirmationPage /></ProtectedRoute>} />
+              <Route path="/events/:id/team" element={<ProtectedRoute><TeamRegistrationPage /></ProtectedRoute>} />
+
+              {/* ── Propose Event ── */}
+              <Route path="/propose-event" element={<StudentRoute><ProposeEventPage /></StudentRoute>} />
 
               {/* ── Student Dashboard ── */}
-              <Route path="/dashboard" element={
-                <StudentRoute>
-                  <StudentDashboard defaultTab="Overview" />
-                </StudentRoute>
-              } />
-              <Route path="/dashboard/tickets" element={
-                <StudentRoute>
-                  <StudentDashboard defaultTab="My Events" />
-                </StudentRoute>
-              } />
-              <Route path="/dashboard/analytics" element={
-                <StudentRoute>
-                  <StudentDashboard defaultTab="Overview" />
-                </StudentRoute>
-              } />
-              <Route path="/dashboard/settings" element={
-                <StudentRoute>
-                  <StudentDashboard defaultTab="Profile" />
-                </StudentRoute>
-              } />
+              <Route path="/dashboard" element={<StudentRoute><StudentDashboard defaultTab="Overview" /></StudentRoute>} />
+              <Route path="/dashboard/tickets" element={<StudentRoute><StudentTicketsPage /></StudentRoute>} />
+              <Route path="/dashboard/analytics" element={<StudentRoute><StudentAnalyticsPage /></StudentRoute>} />
+              <Route path="/dashboard/settings" element={<StudentRoute><StudentSettingsPage /></StudentRoute>} />
 
               {/* ── Admin ── */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/events" element={<AdminRoute><AdminEventsPage /></AdminRoute>} />
               <Route path="/admin/events/create" element={<AdminRoute><AdminEventsPage openCreate /></AdminRoute>} />
               <Route path="/admin/events/:id/edit" element={<AdminRoute><AdminEventsPage /></AdminRoute>} />
-              <Route path="/admin/tickets" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/tickets" element={<AdminRoute><AdminTicketsPage /></AdminRoute>} />
               <Route path="/admin/analytics" element={<AdminRoute><AdminAnalyticsPage /></AdminRoute>} />
               <Route path="/admin/checkin/:eventId" element={<AdminRoute><AdminCheckinPage /></AdminRoute>} />
               <Route path="/admin/scanner/:eventId" element={<AdminRoute><AdminScannerPage /></AdminRoute>} />

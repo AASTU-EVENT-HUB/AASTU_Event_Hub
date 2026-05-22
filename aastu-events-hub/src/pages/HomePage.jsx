@@ -1,15 +1,28 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
 import EventCard from '../components/EventCard';
 import { MOCK_EVENTS, getEventStatus } from '../data/mockData';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 export default function HomePage() {
   const navigate = useNavigate();
 
-  const liveEvents = MOCK_EVENTS.filter(e => getEventStatus(e) === 'live');
+  const [liveEvents, setLiveEvents] = useState(MOCK_EVENTS.filter(e => getEventStatus(e) === 'live'));
   const featuredEvents = MOCK_EVENTS.filter(e => e.isFeatured);
   const upcomingEvents = MOCK_EVENTS.filter(e => ['upcoming', 'soon'].includes(getEventStatus(e))).slice(0, 6);
+
+  // Try to fetch live events from real API; fall back to mock
+  useEffect(() => {
+    axios.get(`${API_BASE}/events/live`)
+      .then(res => {
+        if (Array.isArray(res.data) && res.data.length > 0) setLiveEvents(res.data);
+      })
+      .catch(() => { /* keep mock */ });
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
