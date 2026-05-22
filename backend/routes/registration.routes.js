@@ -4,9 +4,12 @@ const router = express.Router();
 const {
   registerForEvent,
   getMyRegistrations,
+  getAllRegistrations,
 } = require("../controllers/registration.controller");
 const authMiddleware = require("../middleware/auth");
+const adminOnly = require("../middleware/adminOnly");
 
+router.get("/all", authMiddleware, adminOnly, getAllRegistrations);
 router.post("/:eventId", authMiddleware, registerForEvent);
 router.get("/", authMiddleware, getMyRegistrations);
 

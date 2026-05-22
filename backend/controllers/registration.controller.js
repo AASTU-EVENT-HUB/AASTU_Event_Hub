@@ -151,3 +151,46 @@ exports.getMyRegistrations = async (req, res, next) => {
     next(error);
   }
 };
+
+// GET /api/registrations/all — admin only
+exports.getAllRegistrations = async (req, res, next) => {
+  try {
+    const [rows] = await db.execute(
+      `
+      SELECT
+        r.id AS registrationId,
+        r.status,
+        r.registered_at AS registeredAt,
+        u.name AS studentName,
+        u.student_id AS studentId,
+        u.email,
+        e.id AS eventId,
+        e.title AS eventTitle,
+        e.start_date AS startDate
+      FROM registrations r
+      JOIN users u ON u.id = r.student_id
+      JOIN events e ON e.id = r.event_id
+      ORDER BY r.registered_at DESC
+      LIMIT 500
+      `
+    );
+
+    const registrations = rows.map(row => ({
+      registrationId: row.registrationId,
+      status: row.status,
+      registeredAt: row.registeredAt,
+      studentName: row.studentName,
+      studentId: row.studentId,
+      email: row.email,
+      event: {
+        id: row.eventId,
+        title: row.eventTitle,
+        startDate: row.startDate,
+      },
+    }));
+
+    res.json({ success: true, registrations });
+  } catch (error) {
+    next(error);
+  }
+};

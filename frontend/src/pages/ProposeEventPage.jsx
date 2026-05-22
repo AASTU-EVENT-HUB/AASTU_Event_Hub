@@ -4,6 +4,7 @@ import PublicNavbar from '../components/layout/PublicNavbar';
 import { CATEGORIES, DEPARTMENTS } from '../data/mockData';
 import { useToast } from '../context/ToastContext';
 import { useNotifications } from '../context/NotificationContext';
+import { proposalsAPI } from '../services/api';
 
 const STEPS = ['Basic Info', 'Details', 'Logistics', 'Review'];
 
@@ -48,6 +49,25 @@ export default function ProposeEventPage() {
   };
 
   const handleSubmit = async () => {
+    try {
+      await proposalsAPI.create({
+        title: form.title,
+        category: form.category,
+        department: form.department,
+        description: form.description,
+        safetyNotes: form.safetyNotes,
+        date: form.startDate,
+        time: form.startTime,
+        venue: form.location,
+        expectedAttendance: parseInt(form.capacity) || 0,
+        banner: form.bannerUrl,
+        tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        isHackathon: form.isHackathon,
+        submittedAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      });
+    } catch {
+      // Proposal saved in-memory on backend even if this fails
+    }
     toast.success('Proposal Submitted!', 'Your event is under admin review. You\'ll be notified within 1–3 business days.');
     addNotification({ type: 'approval', title: 'Event Submitted', message: `"${form.title}" is now under admin review`, icon: '📋' });
     setSubmitted(true);

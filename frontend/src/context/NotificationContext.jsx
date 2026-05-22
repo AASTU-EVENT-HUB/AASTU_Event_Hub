@@ -1,17 +1,17 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { notificationsAPI } from '../services/api';
 
 const NotificationContext = createContext(null);
 
-const INITIAL_NOTIFICATIONS = [
-  { id: 1, type: 'registration', title: 'Registration Confirmed', message: 'You\'re registered for AASTU Grand Hackathon 2024', time: '2 mins ago', read: false, icon: '🎟' },
-  { id: 2, type: 'waitlist', title: 'Waitlist Update', message: 'You moved to #2 on the waitlist for Data Science Workshop', time: '1 hour ago', read: false, icon: '⏳' },
-  { id: 3, type: 'reminder', title: 'Event Tomorrow', message: 'HackAASTU 24 starts tomorrow at 9:00 AM', time: '3 hours ago', read: false, icon: '📅' },
-  { id: 4, type: 'approval', title: 'Event Approved', message: 'Your event proposal "AI Workshop" has been approved', time: '1 day ago', read: true, icon: '✅' },
-  { id: 5, type: 'invitation', title: 'Team Invitation', message: 'Tigist Alemu invited you to join "Innovation Squad"', time: '2 days ago', read: true, icon: '👥' },
-];
-
 export function NotificationProvider({ children }) {
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+
+  // Load from backend on mount
+  useEffect(() => {
+    notificationsAPI.getAll()
+      .then(res => setNotifications(res.data.notifications || []))
+      .catch(() => {}); // Fail silently — backend may not be running
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -19,16 +19,24 @@ export function NotificationProvider({ children }) {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }, []);
 
-  const markRead = useCallback((id) => {
+  const markRead = useCallback(async (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    try { await notificationsAPI.markRead(id); } catch {}
   }, []);
 
-  const clearNotification = useCallback((id) => {
+  const clearNotification = useCallback(async (id) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+    try { await notificationsAPI.delete(id); } catch {}
   }, []);
 
-  const addNotification = useCallback((notif) => {
-    setNotifications(prev => [{ ...notif, id: Date.now(), read: false, time: 'Just now' }, ...prev]);
+  const addNotification = useCallback(async (notif) => {
+    const local = { ...notif, id: Date.now(), read: false, time: 'Just now' };
+    setNotifications(prev => [local, ...prev]);
+    try {
+      const res = await notificationsAPI.create({ ...notif, sentAt: 'Just now' });
+      // Replace local with server version
+      setNotifications(prev => prev.map(n => n.id === local.id ? res.data.notification : n));
+    } catch {}
   }, []);
 
   return (

@@ -1,20 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
-import { MOCK_EVENTS, MOCK_REGISTRATIONS } from '../../data/mockData';
 import { useToast } from '../../context/ToastContext';
-
-// Build a flat list of all registrations across all events
-const ALL_TICKETS = [
-  { id: 'TKT-001', studentName: 'Selam Balcha', studentId: 'AAU-2021-CS-042', email: 'selam@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=1', eventId: 'e1', status: 'confirmed', registeredAt: '2024-10-01', qrCode: 'QR-AAU-E1-U1-2024' },
-  { id: 'TKT-002', studentName: 'Henok Tadesse', studentId: 'AAU-2020-SE-018', email: 'henok@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=3', eventId: 'e2', status: 'checked_in', registeredAt: '2024-10-02', qrCode: 'QR-AAU-E2-U2-2024' },
-  { id: 'TKT-003', studentName: 'Tigist Alemu', studentId: 'AAU-2022-EE-031', email: 'tigist@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=7', eventId: 'e1', status: 'confirmed', registeredAt: '2024-10-03', qrCode: 'QR-AAU-E1-U3-2024' },
-  { id: 'TKT-004', studentName: 'Dawit Bekele', studentId: 'AAU-2021-ME-055', email: 'dawit@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=9', eventId: 'e8', status: 'confirmed', registeredAt: '2024-10-04', qrCode: 'QR-AAU-E8-U4-2024' },
-  { id: 'TKT-005', studentName: 'Sara Haile', studentId: 'AAU-2023-CS-012', email: 'sara@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=11', eventId: 'e2', status: 'checked_in', registeredAt: '2024-10-05', qrCode: 'QR-AAU-E2-U5-2024' },
-  { id: 'TKT-006', studentName: 'Yonas Tesfaye', studentId: 'AAU-2020-CS-007', email: 'yonas@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=15', eventId: 'e5', status: 'cancelled', registeredAt: '2024-10-06', qrCode: 'QR-AAU-E5-U6-2024' },
-  { id: 'TKT-007', studentName: 'Hiwot Girma', studentId: 'AAU-2022-SE-044', email: 'hiwot@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=17', eventId: 'e1', status: 'confirmed', registeredAt: '2024-10-07', qrCode: 'QR-AAU-E1-U7-2024' },
-  { id: 'TKT-008', studentName: 'Abebe Kebede', studentId: 'AAU-2021-EE-022', email: 'abebe@aastu.edu.et', avatar: 'https://i.pravatar.cc/40?img=19', eventId: 'e8', status: 'checked_in', registeredAt: '2024-10-08', qrCode: 'QR-AAU-E8-U8-2024' },
-];
+import { eventsAPI } from '../../services/api';
+import apiClient from '../../services/api';
 
 const STATUS_CONFIG = {
   confirmed: { label: 'Confirmed', color: '#22C55E', bg: 'rgba(34,197,94,0.15)', badgeClass: 'badge-green' },
@@ -25,33 +14,54 @@ const STATUS_CONFIG = {
 
 export default function AdminTicketsPage() {
   const toast = useToast();
-  const [tickets, setTickets] = useState(ALL_TICKETS);
+  const [tickets, setTickets] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filterEvent, setFilterEvent] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
   const [search, setSearch] = useState('');
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [tRes, eRes] = await Promise.all([
+          apiClient.get('/registrations/all'),
+          eventsAPI.getAll({ limit: 100 }),
+        ]);
+        setTickets(tRes.data.registrations || []);
+        setEvents(eRes.data.events || []);
+      } catch {
+        // /registrations/all may not exist — fall back gracefully
+        try {
+          const eRes = await eventsAPI.getAll({ limit: 100 });
+          setEvents(eRes.data.events || []);
+        } catch {}
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
   const filtered = tickets.filter(t => {
-    if (filterEvent !== 'all' && t.eventId !== filterEvent) return false;
+    if (filterEvent !== 'all' && String(t.event?.id) !== String(filterEvent)) return false;
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
-    if (dateFrom && t.registeredAt < dateFrom) return false;
-    if (dateTo && t.registeredAt > dateTo) return false;
     if (search) {
       const q = search.toLowerCase();
-      if (!t.studentName.toLowerCase().includes(q) &&
-          !t.studentId.toLowerCase().includes(q) &&
-          !t.id.toLowerCase().includes(q)) return false;
+      if (!t.studentName?.toLowerCase().includes(q) && !t.studentId?.toLowerCase().includes(q)) return false;
     }
     return true;
   });
 
   const exportCSV = () => {
-    const headers = ['Ticket ID', 'Student Name', 'Student ID', 'Email', 'Event', 'Status', 'Registered At'];
-    const rows = filtered.map(t => {
-      const event = MOCK_EVENTS.find(e => e.id === t.eventId);
-      return [t.id, t.studentName, t.studentId, t.email, event?.title || t.eventId, t.status, t.registeredAt];
-    });
+    const headers = ['Student Name', 'Student ID', 'Event', 'Status', 'Registered At'];
+    const rows = filtered.map(t => [
+      t.studentName || t.name || '—',
+      t.studentId || '—',
+      t.event?.title || '—',
+      t.status,
+      t.registeredAt || t.registered_at || '—',
+    ]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -74,10 +84,10 @@ export default function AdminTicketsPage() {
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 4 }}>Ticket Management</h1>
               <p style={{ fontSize: 13, color: '#64748B' }}>
-                {filtered.length} of {tickets.length} tickets
+                {loading ? 'Loading...' : `${filtered.length} of ${tickets.length} tickets`}
               </p>
             </div>
-            <button className="btn btn-outline btn-sm" onClick={exportCSV}>
+            <button className="btn btn-outline btn-sm" onClick={exportCSV} disabled={tickets.length === 0}>
               ⬇ Export CSV
             </button>
           </div>
@@ -88,7 +98,7 @@ export default function AdminTicketsPage() {
               <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>🔍</span>
               <input
                 className="form-input"
-                placeholder="Search by name, ID, or ticket..."
+                placeholder="Search by name or ID..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{ paddingLeft: 36 }}
@@ -96,22 +106,14 @@ export default function AdminTicketsPage() {
             </div>
             <select className="form-select" value={filterEvent} onChange={e => setFilterEvent(e.target.value)} style={{ width: 'auto', minWidth: 180 }}>
               <option value="all">All Events</option>
-              {MOCK_EVENTS.map(e => <option key={e.id} value={e.id}>{e.title.slice(0, 30)}</option>)}
+              {events.map(e => <option key={e.id} value={e.id}>{e.title?.slice(0, 30)}</option>)}
             </select>
             <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 'auto' }}>
               <option value="all">All Status</option>
               <option value="confirmed">Confirmed</option>
               <option value="checked_in">Checked In</option>
-              <option value="cancelled">Cancelled</option>
               <option value="waitlist">Waitlist</option>
             </select>
-            <input type="date" className="form-input" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ width: 'auto' }} title="From date" />
-            <input type="date" className="form-input" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ width: 'auto' }} title="To date" />
-            {(filterEvent !== 'all' || filterStatus !== 'all' || dateFrom || dateTo || search) && (
-              <button className="btn btn-outline btn-sm" onClick={() => { setFilterEvent('all'); setFilterStatus('all'); setDateFrom(''); setDateTo(''); setSearch(''); }}>
-                Clear
-              </button>
-            )}
           </div>
 
           {/* Stats row */}
@@ -120,7 +122,7 @@ export default function AdminTicketsPage() {
               { label: 'Total', value: tickets.length, color: '#fff' },
               { label: 'Confirmed', value: tickets.filter(t => t.status === 'confirmed').length, color: '#22C55E' },
               { label: 'Checked In', value: tickets.filter(t => t.status === 'checked_in').length, color: '#3B6FFF' },
-              { label: 'Cancelled', value: tickets.filter(t => t.status === 'cancelled').length, color: '#EF4444' },
+              { label: 'Waitlist', value: tickets.filter(t => t.status === 'waitlist').length, color: '#F5A623' },
             ].map(s => (
               <div key={s.label} className="card" style={{ padding: '14px 18px' }}>
                 <div style={{ fontSize: 11, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{s.label}</div>
@@ -135,64 +137,39 @@ export default function AdminTicketsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Ticket ID</th>
                     <th>Student</th>
                     <th>Event</th>
-                    <th>Date</th>
+                    <th>Registered</th>
                     <th>Status</th>
-                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(t => {
-                    const event = MOCK_EVENTS.find(e => e.id === t.eventId);
+                  {filtered.map((t, i) => {
                     const sc = STATUS_CONFIG[t.status] || STATUS_CONFIG.confirmed;
                     return (
-                      <tr key={t.id}>
-                        <td>
-                          <span style={{ fontFamily: 'monospace', fontSize: 12, color: '#3B6FFF' }}>{t.id}</span>
-                        </td>
+                      <tr key={t.registrationId || i}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <img src={t.avatar} alt={t.studentName} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #3B6FFF, #6B46C1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                              {(t.studentName || t.name || '?').charAt(0).toUpperCase()}
+                            </div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{t.studentName}</div>
-                              <div style={{ fontSize: 11, color: '#64748B' }}>{t.studentId}</div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{t.studentName || t.name || '—'}</div>
+                              <div style={{ fontSize: 11, color: '#64748B' }}>{t.studentId || '—'}</div>
                             </div>
                           </div>
                         </td>
                         <td>
-                          <div style={{ fontSize: 13, color: '#fff', fontWeight: 500 }}>{event?.title?.slice(0, 28) || t.eventId}</div>
+                          <div style={{ fontSize: 13, color: '#fff', fontWeight: 500 }}>{t.event?.title?.slice(0, 28) || '—'}</div>
                           <div style={{ fontSize: 11, color: '#64748B' }}>
-                            {event ? new Date(event.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                            {t.event?.startDate ? new Date(t.event.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                           </div>
                         </td>
-                        <td style={{ fontSize: 12, color: '#94A3B8' }}>{t.registeredAt}</td>
+                        <td style={{ fontSize: 12, color: '#94A3B8' }}>
+                          {t.registeredAt ? new Date(t.registeredAt).toLocaleDateString() : '—'}
+                        </td>
                         <td>
                           <span className={`badge ${sc.badgeClass}`} style={{ fontSize: 10 }}>{sc.label}</span>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                              className="btn btn-sm"
-                              style={{ background: 'rgba(59,111,255,0.15)', border: '1px solid rgba(59,111,255,0.3)', color: '#3B6FFF', padding: '4px 8px', fontSize: 11 }}
-                              onClick={() => toast.info('Ticket', `QR: ${t.qrCode}`)}
-                            >
-                              View QR
-                            </button>
-                            {t.status !== 'cancelled' && (
-                              <button
-                                className="btn btn-sm"
-                                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '4px 8px', fontSize: 11 }}
-                                onClick={() => {
-                                  setTickets(prev => prev.map(tk => tk.id === t.id ? { ...tk, status: 'cancelled' } : tk));
-                                  toast.success('Cancelled', `Ticket ${t.id} cancelled`);
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            )}
-                          </div>
                         </td>
                       </tr>
                     );
@@ -200,9 +177,9 @@ export default function AdminTicketsPage() {
                 </tbody>
               </table>
             </div>
-            {filtered.length === 0 && (
+            {!loading && filtered.length === 0 && (
               <div style={{ padding: '48px', textAlign: 'center', color: '#64748B' }}>
-                No tickets match your filters
+                {tickets.length === 0 ? 'No registrations yet' : 'No tickets match your filters'}
               </div>
             )}
           </div>
