@@ -1,27 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
 import EventCard from '../components/EventCard';
 import { MOCK_EVENTS, getEventStatus } from '../data/mockData';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { eventsAPI } from '../services/api';
 
 export default function HomePage() {
   const navigate = useNavigate();
 
-  const [liveEvents, setLiveEvents] = useState(MOCK_EVENTS.filter(e => getEventStatus(e) === 'live'));
-  const featuredEvents = MOCK_EVENTS.filter(e => e.isFeatured);
-  const upcomingEvents = MOCK_EVENTS.filter(e => ['upcoming', 'soon'].includes(getEventStatus(e))).slice(0, 6);
+  const [liveEvents, setLiveEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [featuredEvents, setFeaturedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Try to fetch live events from real API; fall back to mock
+  // Fetch events from backend API
   useEffect(() => {
-    axios.get(`${API_BASE}/events/live`)
-      .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0) setLiveEvents(res.data);
-      })
-      .catch(() => { /* keep mock */ });
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const res = await eventsAPI.getAll();
+        const allEvents = res.data.events || res.data || [];
+        
+        setLiveEvents(allEvents.filter(e => getEventStatus(e) === 'live'));
+        setFeaturedEvents(allEvents.filter(e => e.isFeatured));
+        setUpcomingEvents(allEvents.filter(e => ['upcoming', 'soon'].includes(getEventStatus(e))).slice(0, 6));
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+        // Fallback to mock data
+        setLiveEvents(MOCK_EVENTS.filter(e => getEventStatus(e) === 'live'));
+        setFeaturedEvents(MOCK_EVENTS.filter(e => e.isFeatured));
+        setUpcomingEvents(MOCK_EVENTS.filter(e => ['upcoming', 'soon'].includes(getEventStatus(e))).slice(0, 6));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
   }, []);
 
   return (

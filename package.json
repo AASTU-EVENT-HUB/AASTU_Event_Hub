@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "cd frontend && vite",
+    "dev:backend": "cd backend && npm run dev",
     "build": "cd frontend && vite build",
     "lint": "cd frontend && eslint . --ext .js,.jsx --config eslint.config.js",
-    "preview": "cd frontend && vite preview"
+    "preview": "cd frontend && vite preview",
+    "setup": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ..",
+    "start:backend": "cd backend && npm start"
   },
   "dependencies": {
     "axios": "^1.16.1",

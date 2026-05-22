@@ -2,7 +2,7 @@
 // DEV_MODE — Set to false before connecting to real backend
 // When false: mock users do not exist and all auth goes through the real API
 // ─────────────────────────────────────────────────────────────────────────────
-export const DEV_MODE = true;
+export const DEV_MODE = false;
 
 export const DEV_MOCK_STUDENT = DEV_MODE ? {
   id: 'u1',

@@ -4,7 +4,8 @@ import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
 import EventCard from '../components/EventCard';
 import StatusBadge from '../components/StatusBadge';
-import { MOCK_EVENTS, CATEGORIES, DEPARTMENTS, getEventStatus } from '../data/mockData';
+import { CATEGORIES, DEPARTMENTS, getEventStatus, MOCK_EVENTS } from '../data/mockData';
+import { eventsAPI } from '../services/api';
 
 const SORT_OPTIONS = ['Newest First', 'Oldest First', 'Most Popular', 'Alphabetical'];
 const PER_PAGE = 6;
@@ -12,6 +13,9 @@ const PER_PAGE = 6;
 export default function EventsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [events, setEvents] = useState(MOCK_EVENTS);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [filters, setFilters] = useState({
     categories: searchParams.getAll('cat') || [],
@@ -23,6 +27,25 @@ export default function EventsPage() {
   const [sort, setSort] = useState('Newest First');
   const [page, setPage] = useState(1);
 
+  // Fetch events from backend API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const res = await eventsAPI.getAll();
+        setEvents(res.data.events || res.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+        setEvents(MOCK_EVENTS); // Fallback to mock data
+        setError('Using mock data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
   // Sync URL
   useEffect(() => {
     const params = new URLSearchParams();
@@ -33,9 +56,9 @@ export default function EventsPage() {
     filters.categories.forEach(c => params.append('cat', c));
     setSearchParams(params, { replace: true });
     setPage(1);
-  }, [filters]);
+  }, [filters, setSearchParams]);
 
-  const filtered = MOCK_EVENTS.filter(e => {
+  const filtered = events.filter(e => {
     if (filters.q && !e.title.toLowerCase().includes(filters.q.toLowerCase()) &&
         !e.category.toLowerCase().includes(filters.q.toLowerCase())) return false;
     if (filters.categories.length && !filters.categories.includes(e.category)) return false;
@@ -52,7 +75,7 @@ export default function EventsPage() {
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const featured = MOCK_EVENTS.find(e => e.isFeatured && getEventStatus(e) !== 'ended');
+  const featured = events.find(e => e.isFeatured && getEventStatus(e) !== 'ended');
 
   const toggleCategory = (cat) => {
     setFilters(f => ({
