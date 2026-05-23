@@ -16,7 +16,9 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
       {
         clientID: GOOGLE_CLIENT_ID,
         clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/auth/google/callback`,
+        // Prefer an explicit redirect URI set in environment for production
+        // Fallback to BACKEND_URL + route for local development
+        callbackURL: process.env.GOOGLE_REDIRECT_URI || `${process.env.BACKEND_URL || "http://localhost:5000"}/api/auth/google/callback`,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
