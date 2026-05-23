@@ -1,37 +1,5 @@
 const db = require("../config/db");
 
-// Ensure notifications table exists (created in db.js CREATE_TABLES, but guard here too)
-const ensureTable = async () => {
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS notifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      type TEXT,
-      title TEXT,
-      message TEXT,
-      icon TEXT DEFAULT '🔔',
-      event_ref TEXT,
-      is_read INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
-    )
-  `).catch(() => {});
-};
-ensureTable();
-
-// Helper — create a notification for a specific user (used internally by other controllers)
-const createForUser = async (userId, { type, title, message, icon = "🔔", eventRef = null }) => {
-  try {
-    await db.execute(
-      `INSERT INTO notifications (user_id, type, title, message, icon, event_ref)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, type, title, message, icon, eventRef]
-    );
-  } catch (err) {
-    console.error("Failed to create notification:", err.message);
-  }
-};
-exports.createForUser = createForUser;
-
 // GET /api/notifications — returns notifications for the logged-in user
 exports.getNotifications = async (req, res) => {
   try {
@@ -56,18 +24,18 @@ exports.getNotifications = async (req, res) => {
 
     res.json({ success: true, notifications });
   } catch (err) {
+    console.error("getNotifications error:", err.message);
     res.json({ success: true, notifications: [] });
   }
 };
 
-// POST /api/notifications — organizer/admin sends a notification
+// POST /api/notifications — organizer/admin sends a notification to users
 exports.createNotification = async (req, res) => {
   try {
     const { type, title, message, icon, event: eventRef, targetUserId } = req.body;
-    const senderId = req.user?.id;
+    const { createForUser } = require("../utils/notify");
 
     if (targetUserId) {
-      // Send to specific user
       await createForUser(targetUserId, { type, title, message, icon, eventRef });
     } else if (eventRef) {
       // Send to all students registered for this event
@@ -79,9 +47,7 @@ exports.createNotification = async (req, res) => {
       }
     } else {
       // Broadcast to all students
-      const [students] = await db.execute(
-        "SELECT id FROM users WHERE role = 'student'"
-      );
+      const [students] = await db.execute("SELECT id FROM users WHERE role = 'student'");
       for (const s of students) {
         await createForUser(s.id, { type, title, message, icon, eventRef });
       }
@@ -89,6 +55,7 @@ exports.createNotification = async (req, res) => {
 
     res.status(201).json({ success: true, message: "Notification sent" });
   } catch (err) {
+    console.error("createNotification error:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -102,7 +69,7 @@ exports.markRead = async (req, res) => {
       "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?", [id, userId]
     );
     res.json({ success: true });
-  } catch (err) {
+  } catch {
     res.json({ success: true });
   }
 };
@@ -116,12 +83,11 @@ exports.clearNotification = async (req, res) => {
       "DELETE FROM notifications WHERE id = ? AND user_id = ?", [id, userId]
     );
     res.json({ success: true });
-  } catch (err) {
+  } catch {
     res.json({ success: true });
   }
 };
 
-// Helper — format relative time
 function formatTime(dateStr) {
   if (!dateStr) return "Just now";
   const diff = Date.now() - new Date(dateStr).getTime();

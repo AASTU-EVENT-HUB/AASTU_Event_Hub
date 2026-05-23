@@ -1,6 +1,6 @@
 const db = require("../config/db");
 const generateQR = require("../utils/generateQR");
-const { createForUser } = require("./notifications.controller");
+const { createForUser } = require("../utils/notify");
 
 exports.registerForEvent = async (req, res, next) => {
   try {

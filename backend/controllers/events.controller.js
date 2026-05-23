@@ -1,5 +1,5 @@
 const db = require("../config/db");
-const { createForUser } = require("./notifications.controller");
+const { createForUser } = require("../utils/notify");
 
 // POST /api/events — organizer creates event (status=pending), admin creates approved
 exports.createEvent = async (req, res, next) => {
