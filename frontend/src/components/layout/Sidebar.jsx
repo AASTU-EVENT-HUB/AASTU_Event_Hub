@@ -1,6 +1,7 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Logo from '../Logo';
+import UserAvatar from '../UserAvatar';
 
 const studentNav = [
   { to: '/dashboard', icon: '⊞', label: 'Dashboard', end: true },
@@ -106,13 +107,20 @@ export default function Sidebar() {
         </Link>
       </nav>
 
-      {/* Bottom */}
+      {/* User info at bottom */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid #1E2A45' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <UserAvatar user={user} size={32} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</div>
+            <div style={{ fontSize: 10, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+          </div>
+        </div>
         {config.cta && (
           <button
             className="btn btn-primary btn-full btn-sm"
             onClick={() => navigate(config.cta.path)}
-            style={{ borderRadius: 10, marginBottom: 10 }}
+            style={{ borderRadius: 10, marginBottom: 8 }}
           >
             {config.cta.label}
           </button>
