@@ -29,6 +29,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://aastu-event-hub.onrender.com",
   "https://aastu-events-hub.onrender.com",
+  "https://aastu-events-frontend.onrender.com",
 ];
 
 // Also support a custom CORS_ORIGIN env variable (comma-separated list)

@@ -20,10 +20,10 @@ services:
         value: sqlite
       # CORS: allow the production frontend URL (comma-separated for multiple)
       - key: CORS_ORIGIN
-        value: "https://aastu-event-hub.onrender.com"
+        value: "https://aastu-events-frontend.onrender.com,https://aastu-event-hub.onrender.com"
       # FRONTEND_URL: used by Google OAuth redirect
       - key: FRONTEND_URL
-        value: "https://aastu-event-hub.onrender.com"
+        value: "https://aastu-events-frontend.onrender.com"
 
   - type: static_site
     name: aastu-frontend
