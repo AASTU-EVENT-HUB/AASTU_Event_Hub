@@ -27,7 +27,7 @@ const FAQ_CATEGORIES = [
     ],
   },
   {
-    id: 'approval', icon: '✅', label: 'Event Approval',
+    id: 'approval', icon: '', label: 'Event Approval',
     faqs: [
       { q: 'How do I submit an event proposal?', a: 'Go to Dashboard → Create Event. Fill in all required details and submit. Your event will go through admin review before being published.' },
       { q: 'How long does approval take?', a: 'Typically 1–3 business days. You\'ll receive a notification when your event is approved, rejected, or if changes are requested.' },
@@ -35,21 +35,21 @@ const FAQ_CATEGORIES = [
     ],
   },
   {
-    id: 'notifications', icon: '🔔', label: 'Notifications',
+    id: 'notifications', icon: '', label: 'Notifications',
     faqs: [
       { q: 'How do I manage notification preferences?', a: 'Go to Dashboard → Settings → Notifications to customize which notifications you receive and how.' },
       { q: 'Why am I not receiving email notifications?', a: 'Check your spam folder. Ensure your university email is verified in your profile settings.' },
     ],
   },
   {
-    id: 'analytics', icon: '📊', label: 'Analytics',
+    id: 'analytics', icon: '', label: 'Analytics',
     faqs: [
       { q: 'Who can access analytics?', a: 'Full platform analytics are available to admins only. Organizers can see analytics for their own events.' },
       { q: 'How do I export a report?', a: 'In the Analytics page, click "Export Health Report" or "Generate Weekly Report" to download PDF or CSV formats.' },
     ],
   },
   {
-    id: 'account', icon: '👤', label: 'Account Settings',
+    id: 'account', icon: '', label: 'Account Settings',
     faqs: [
       { q: 'How do I change my password?', a: 'Go to Dashboard → Settings → Security → Change Password.' },
       { q: 'How do I update my department?', a: 'Go to Dashboard → Settings → Profile. Note: Student ID changes require admin approval.' },
@@ -59,10 +59,10 @@ const FAQ_CATEGORIES = [
 ];
 
 const QUICK_GUIDES = [
-  { icon: '🚀', title: 'Getting Started', desc: 'Create your account, complete onboarding, and register for your first event in under 5 minutes.' },
-  { icon: '🎯', title: 'Finding Events', desc: 'Use filters on the Events page to find events by category, department, or date range.' },
-  { icon: '📲', title: 'Using Your Ticket', desc: 'Show your QR code at the event entrance. The organizer will scan it to check you in.' },
-  { icon: '⚡', title: 'Hackathon Guide', desc: 'Form a team, register together, and submit your project before the deadline.' },
+  { icon: '', title: 'Getting Started', desc: 'Create your account, complete onboarding, and register for your first event in under 5 minutes.' },
+  { icon: '', title: 'Finding Events', desc: 'Use filters on the Events page to find events by category, department, or date range.' },
+  { icon: '', title: 'Using Your Ticket', desc: 'Show your QR code at the event entrance. The organizer will scan it to check you in.' },
+  { icon: '', title: 'Hackathon Guide', desc: 'Form a team, register together, and submit your project before the deadline.' },
 ];
 
 export default function HelpCenter({ onClose }) {

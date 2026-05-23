@@ -9,7 +9,7 @@ import Footer from '../components/layout/Footer';
 const FAQ_SECTIONS = [
   {
     title: 'Getting Started',
-    icon: '🚀',
+    icon: '',
     items: [
       { q: 'How do I create an account?', a: 'Click "Sign Up" on the homepage. Enter your AASTU email, name, student ID, and password. After signup you\'ll complete a short onboarding to set your interests.' },
       { q: 'What is the AASTU Events Hub?', a: 'AASTU Events Hub is the official platform for discovering, registering, and managing university events — hackathons, workshops, seminars, cultural events, and more.' },
@@ -19,7 +19,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Registration & Tickets',
-    icon: '🎫',
+    icon: '',
     items: [
       { q: 'How do I register for an event?', a: 'Navigate to any event page and click "Register Now". Confirm your details and you\'ll receive a QR code ticket immediately.' },
       { q: 'Where can I find my tickets?', a: 'Go to Dashboard → My Events (or /dashboard/tickets). All your confirmed registrations are listed there with QR codes.' },
@@ -30,7 +30,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Events & Schedules',
-    icon: '📅',
+    icon: '',
     items: [
       { q: 'How do I find events by category?', a: 'Use the filter sidebar on the Events page. You can filter by category, department, and date range simultaneously.' },
       { q: 'What does "LIVE" mean on an event?', a: 'A LIVE badge means the event is currently happening right now. You can still check in if you\'re registered.' },
@@ -40,7 +40,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Account & Profile',
-    icon: '👤',
+    icon: '',
     items: [
       { q: 'How do I update my profile?', a: 'Go to Dashboard → Settings → Profile tab. You can update your name, bio, department, and profile picture.' },
       { q: 'Can I change my student ID?', a: 'Student IDs are assigned by the university and cannot be changed through the platform. Contact your admin if there\'s an error.' },
@@ -62,7 +62,7 @@ const FAQ_SECTIONS = [
 
 const ADMIN_SECTION = {
   title: 'Admin Guide',
-  icon: '🛡',
+  icon: '',
   items: [
     { q: 'How do I approve event proposals?', a: 'Go to Admin → Approvals. Review each proposal and click Approve, Request Changes, or Reject. Approved events go live immediately.' },
     { q: 'How do I manage check-ins?', a: 'Go to Admin → Events, find the event, and click the check-in icon. Use the QR scanner for fast check-ins or the manual list for manual verification.' },

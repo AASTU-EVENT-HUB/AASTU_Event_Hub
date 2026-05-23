@@ -107,10 +107,10 @@ export default function RegistrationPage() {
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{event.title}</div>
                   <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 2 }}>
-                    📅 {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                     {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
                   <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 2 }}>
-                    🕐 {new Date(event.startDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                     {new Date(event.startDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                   <div style={{ fontSize: 12, color: '#94A3B8' }}>📍 {event.location}</div>
                 </div>

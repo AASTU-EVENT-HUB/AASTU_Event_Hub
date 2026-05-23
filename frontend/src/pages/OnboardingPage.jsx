@@ -4,18 +4,18 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 const INTERESTS = [
-  { label: 'Artificial Intelligence', icon: '🤖', desc: 'Machine learning, Neural networks, and LLMs' },
-  { label: 'Robotics', icon: '🦾', desc: 'Mechatronics, Automation, and Hardware design' },
-  { label: 'Software Dev', icon: '💻', desc: 'Fullstack architecture, DevOps, and Cloud' },
-  { label: 'Digital Arts', icon: '🎨', desc: 'UI/UX design, Creative coding, and VR Art' },
-  { label: 'Startups', icon: '🚀', desc: 'Venture capital, Pitching, and Product management' },
-  { label: 'Cybersecurity', icon: '🔐', desc: 'Ethical hacking, Cryptography, and Security' },
-  { label: 'Biotech', icon: '🧬', desc: 'Genomics, Bio-engineering, and more' },
-  { label: 'Aerospace', icon: '🛸', desc: 'Orbital mechanics, Propulsion, and more' },
-  { label: 'FinTech', icon: '💰', desc: 'Blockchain, Algorithmic trading, and more' },
-  { label: 'Hackathons', icon: '⚡', desc: 'Competitive coding and innovation' },
-  { label: 'Workshops', icon: '🔧', desc: 'Hands-on learning sessions' },
-  { label: 'Cultural', icon: '🎭', desc: 'Arts, music, and cultural events' },
+  { label: 'Artificial Intelligence', icon: '', desc: 'Machine learning, Neural networks, and LLMs' },
+  { label: 'Robotics', icon: '', desc: 'Mechatronics, Automation, and Hardware design' },
+  { label: 'Software Dev', icon: '', desc: 'Fullstack architecture, DevOps, and Cloud' },
+  { label: 'Digital Arts', icon: '', desc: 'UI/UX design, Creative coding, and VR Art' },
+  { label: 'Startups', icon: '', desc: 'Venture capital, Pitching, and Product management' },
+  { label: 'Cybersecurity', icon: '', desc: 'Ethical hacking, Cryptography, and Security' },
+  { label: 'Biotech', icon: '', desc: 'Genomics, Bio-engineering, and more' },
+  { label: 'Aerospace', icon: '', desc: 'Orbital mechanics, Propulsion, and more' },
+  { label: 'FinTech', icon: '', desc: 'Blockchain, Algorithmic trading, and more' },
+  { label: 'Hackathons', icon: '', desc: 'Competitive coding and innovation' },
+  { label: 'Workshops', icon: '', desc: 'Hands-on learning sessions' },
+  { label: 'Cultural', icon: '', desc: 'Arts, music, and cultural events' },
 ];
 
 export default function OnboardingPage() {

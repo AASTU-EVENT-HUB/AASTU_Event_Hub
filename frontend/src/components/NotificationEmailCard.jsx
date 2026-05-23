@@ -61,8 +61,8 @@ export default function NotificationEmailCard({ eventName, eventDate, eventTime,
             {eventName || 'AI Ethics Workshop'}
           </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#94A3B8' }}>
-            <span>📅 {eventDate || 'Nov 15, 2024'}</span>
-            <span>🕐 {eventTime || '10:00 AM'}</span>
+            <span> {eventDate || 'Nov 15, 2024'}</span>
+            <span> {eventTime || '10:00 AM'}</span>
           </div>
         </div>
 
@@ -78,7 +78,7 @@ export default function NotificationEmailCard({ eventName, eventDate, eventTime,
           color: '#F5A623',
           fontWeight: 600,
         }}>
-          ⏰ You have {hoursLeft} hours to claim your spot
+           You have {hoursLeft} hours to claim your spot
         </div>
 
         {/* CTA */}

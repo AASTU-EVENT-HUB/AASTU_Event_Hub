@@ -228,9 +228,9 @@ export default function TeamRegistrationPage() {
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {[
-              { icon: '🎯', title: 'Diverse Skills', desc: 'Mix of frontend, backend, and design expertise' },
-              { icon: '🤝', title: 'Clear Roles', desc: 'Define responsibilities before the event starts' },
-              { icon: '⚡', title: 'Good Communication', desc: 'Stay in sync with regular check-ins' },
+              { icon: '', title: 'Diverse Skills', desc: 'Mix of frontend, backend, and design expertise' },
+              { icon: '', title: 'Clear Roles', desc: 'Define responsibilities before the event starts' },
+              { icon: '', title: 'Good Communication', desc: 'Stay in sync with regular check-ins' },
             ].map(tip => (
               <div key={tip.title} style={{ textAlign: 'center', padding: '12px 8px' }}>
                 <div style={{ fontSize: 24, marginBottom: 6 }}>{tip.icon}</div>

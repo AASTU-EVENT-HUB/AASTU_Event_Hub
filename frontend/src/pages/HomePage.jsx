@@ -125,18 +125,7 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* Demo quick access */}
-            <div style={{ marginTop: 20 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ background: 'rgba(59,111,255,0.08)', border: '1px solid rgba(59,111,255,0.12)', padding: '10px 12px', borderRadius: 10 }}>
-                  <div style={{ fontSize: 12, color: '#3B6FFF', fontWeight: 700 }}>Demo accounts</div>
-                  <div style={{ fontSize: 13, color: '#94A3B8' }}>Student: student@aastu.edu.et / 12345678</div>
-                  <div style={{ fontSize: 13, color: '#94A3B8' }}>Admin: admin@aastu.edu.et / 12345678</div>
-                </div>
-                <button className="btn btn-outline" onClick={() => navigate('/login', { state: { demo: { email: 'student@aastu.edu.et', password: '12345678' } } })}>Try Student</button>
-                <button className="btn btn-outline" onClick={() => navigate('/login', { state: { demo: { email: 'admin@aastu.edu.et', password: '12345678' } } })}>Try Admin</button>
-              </div>
-            </div>
+            
 
             {/* Stats */}
             <div style={{ display: 'flex', gap: 32, marginTop: 48, flexWrap: 'wrap' }}>
@@ -216,7 +205,7 @@ export default function HomePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 36 }}>
             <div>
               <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-                📅 Don't Miss Out
+                 Don't Miss Out
               </div>
               <h2 style={{ fontSize: 32, fontWeight: 800, color: '#fff' }}>Upcoming Events</h2>
             </div>

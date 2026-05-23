@@ -223,7 +223,7 @@ export default function RegistrationConfirmationPage() {
               style={{ borderRadius: 10, minWidth: 160 }}
               onClick={() => downloadICS(event)}
             >
-              📅 Add to Calendar
+               Add to Calendar
             </button>
           </div>
 

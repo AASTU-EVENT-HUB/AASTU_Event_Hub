@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import Logo from '../Logo';
+import UserAvatar from '../UserAvatar';
 import NotificationPanel from '../NotificationPanel';
 import HelpCenter from '../HelpCenter';
 
@@ -65,25 +66,7 @@ export default function PublicNavbar() {
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = '#1E2A45'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}
                 >
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #3B6FFF, #6B46C1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: '#fff', border: '2px solid #1E2A45',
-                    position: 'relative',
-                  }}>
-                    {user.name?.charAt(0).toUpperCase()}
-                    {/* Notification dot */}
-                    {unreadCount > 0 && (
-                      <span style={{
-                        position: 'absolute', top: -2, right: -2,
-                        width: 14, height: 14, borderRadius: '50%',
-                        background: '#EF4444', border: '1.5px solid #0A0F2C',
-                        fontSize: 8, fontWeight: 700, color: '#fff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
-                    )}
-                  </div>
+                  <UserAvatar user={user} size={32} showBadge badgeCount={unreadCount} />
                   <span style={{ fontSize: 13, color: '#fff', fontWeight: 500 }}>{user.name?.split(' ')[0]}</span>
                   <span style={{ fontSize: 10, color: '#64748B' }}>▾</span>
                 </div>

@@ -27,7 +27,7 @@ export default function SessionExpiredModal({ onClose }) {
           background: 'rgba(245,166,35,0.15)', border: '2px solid rgba(245,166,35,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 28, margin: '0 auto 16px',
-        }}>⏰</div>
+        }}></div>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Session Expired</h2>
         <p style={{ fontSize: 13, color: '#94A3B8', lineHeight: 1.7, marginBottom: 24 }}>
           Your session has expired for security reasons. Please sign in again to continue.
