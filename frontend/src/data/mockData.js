@@ -389,9 +389,14 @@ export const CATEGORIES = ['Tech', 'Hackathons', 'Workshops', 'Cultural', 'Sport
 export const DEPARTMENTS = ['Computer Science', 'Software Engineering', 'Electrical Engineering', 'Mechanical Engineering', 'Architecture', 'Biotechnology', 'Business', 'Arts', 'Civil Engineering', 'Chemical Engineering'];
 
 export function getEventStatus(event) {
+  if (!event) return 'upcoming';
+  // Support both DB (start_date) and mock (startDate) field names
+  const startStr = event.startDate || event.start_date;
+  const endStr = event.endDate || event.end_date || startStr;
+  if (!startStr) return 'upcoming';
   const now = new Date();
-  const start = new Date(event.startDate);
-  const end = new Date(event.endDate);
+  const start = new Date(startStr);
+  const end = new Date(endStr);
   const diffMs = start - now;
   const diffHours = diffMs / (1000 * 60 * 60);
 

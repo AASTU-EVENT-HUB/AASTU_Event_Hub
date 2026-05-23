@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
-import EventCard from '../components/EventCard';
-import { MOCK_EVENTS, getEventStatus } from '../data/mockData';
+import EventCard, { normalizeEvent, getEventStatus } from '../components/EventCard';
+import { MOCK_EVENTS } from '../data/mockData';
 import { eventsAPI } from '../services/api';
 
 export default function HomePage() {
@@ -20,11 +20,12 @@ export default function HomePage() {
       try {
         setLoading(true);
         const res = await eventsAPI.getAll();
-        const allEvents = res.data.events || res.data || [];
-        
-        setLiveEvents(allEvents.filter(e => getEventStatus(e) === 'live'));
-        setFeaturedEvents(allEvents.filter(e => e.isFeatured));
-        setUpcomingEvents(allEvents.filter(e => ['upcoming', 'soon'].includes(getEventStatus(e))).slice(0, 6));
+        const allEvents = (res.data.events || []).map(normalizeEvent);
+        const source = allEvents.length > 0 ? allEvents : MOCK_EVENTS;
+
+        setLiveEvents(source.filter(e => getEventStatus(e) === 'live'));
+        setFeaturedEvents(source.filter(e => e.isFeatured || getEventStatus(e) === 'upcoming').slice(0, 3));
+        setUpcomingEvents(source.filter(e => ['upcoming', 'soon'].includes(getEventStatus(e))).slice(0, 6));
       } catch (err) {
         console.error('Failed to fetch events:', err);
         // Fallback to mock data

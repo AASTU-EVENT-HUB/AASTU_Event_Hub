@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
-import EventCard from '../components/EventCard';
-import { CATEGORIES, DEPARTMENTS } from '../data/mockData';
+import EventCard, { normalizeEvent } from '../components/EventCard';
+import { CATEGORIES, DEPARTMENTS, MOCK_EVENTS } from '../data/mockData';
 import { eventsAPI } from '../services/api';
 
 const SORT_OPTIONS = ['Newest First', 'Oldest First', 'Most Popular', 'Alphabetical'];
@@ -32,12 +32,13 @@ export default function EventsPage() {
       try {
         setLoading(true);
         const res = await eventsAPI.getAll();
-        setEvents(res.data.events || []);
+        const raw = res.data.events || [];
+        setEvents(raw.length > 0 ? raw.map(normalizeEvent) : MOCK_EVENTS);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch events:', err);
-        setEvents([]);
-        setError('Could not load events. Please try again.');
+        setEvents(MOCK_EVENTS);
+        setError(null);
       } finally {
         setLoading(false);
       }
