@@ -27,7 +27,12 @@ export function ProtectedRoute({ children, requiredRole }) {
   }
 
   // Students who haven't completed onboarding
-  if (user.role === 'student' && !user.onboardingComplete && location.pathname !== '/onboarding') {
+  // Admins and organizers skip onboarding entirely
+  if (
+    user.role === 'student' &&
+    user.onboardingComplete === false &&
+    location.pathname !== '/onboarding'
+  ) {
     return <Navigate to="/onboarding" replace />;
   }
 

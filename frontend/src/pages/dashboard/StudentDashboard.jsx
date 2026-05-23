@@ -57,13 +57,13 @@ export default function StudentDashboard({ defaultTab = 'Overview' }) {
         <Topbar />
 
         <div style={{ padding: '28px 28px', flex: 1 }}>
-          {/* Stats row */}
+          {/* Stats row — real data from registrations */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
             {[
-              { label: 'Event Credits', value: user?.eventCredits?.toLocaleString() || '1,240', sub: '+12% this semester', icon: '⚙', color: '#3B6FFF' },
-              { label: 'Attended Events', value: '24', sub: '4 pending verification', icon: '📅', color: '#22C55E' },
-              { label: 'Waitlist Rank', value: '#3', sub: 'Next: AI Workshop', icon: '⏳', color: '#F5A623', subColor: '#F5A623' },
-              { label: 'Current GPA', value: user?.gpa || '3.85', sub: 'Academic Status: Elite', icon: '🎓', color: '#94A3B8' },
+              { label: 'Registered Events', value: loadingRegs ? '—' : registeredEvents.length, sub: 'Total registrations', icon: '🎫', color: '#3B6FFF' },
+              { label: 'Attended', value: loadingRegs ? '—' : registrations.filter(r => r.status === 'checked_in').length, sub: 'Events checked in', icon: '✅', color: '#22C55E' },
+              { label: 'Waitlisted', value: loadingRegs ? '—' : waitlistedEvents.length, sub: waitlistedEvents.length > 0 ? 'Waiting for a spot' : 'No active waitlists', icon: '⏳', color: '#F5A623', subColor: waitlistedEvents.length > 0 ? '#F5A623' : undefined },
+              { label: 'Department', value: user?.department?.split(' ')[0] || '—', sub: user?.department || 'Not set', icon: '🎓', color: '#94A3B8' },
             ].map(stat => (
               <div key={stat.label} className="card" style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
