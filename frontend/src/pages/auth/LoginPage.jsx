@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -42,6 +42,28 @@ export default function LoginPage() {
       setErrors({ general: result.error });
     }
   };
+
+  const fillDemo = (role) => {
+    if (role === 'student') {
+      setForm({ email: 'student@aastu.edu.et', password: '12345678', remember: false });
+    } else {
+      setForm({ email: 'admin@aastu.edu.et', password: '12345678', remember: false });
+    }
+  };
+
+  // If navigated with demo credentials (from HomePage), prefill the form
+  useEffect(() => {
+    const demo = location.state?.demo;
+    if (demo && demo.email) {
+      setForm({ email: demo.email, password: demo.password || '', remember: false });
+      // small delay to allow UI to mount before submitting automatically
+      if (demo.autoSubmit) {
+        setTimeout(() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 60);
+      }
+    }
+    // clean up state so back/refresh doesn't auto-fill again
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#0A0F2C' }}>
@@ -193,8 +215,13 @@ export default function LoginPage() {
             borderRadius: 10, fontSize: 12, color: '#94A3B8',
           }}>
             <div style={{ fontWeight: 600, color: '#3B6FFF', marginBottom: 6 }}>🔑 Demo credentials</div>
-            <div style={{ marginBottom: 2 }}>Student: <span style={{ color: '#fff' }}>student@aastu.edu.et</span> / any password</div>
-            <div>Admin: <span style={{ color: '#fff' }}>admin@aastu.edu.et</span> / any password</div>
+            <div style={{ marginBottom: 6 }}>Student: <span style={{ color: '#fff' }}>student@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
+            <div style={{ marginBottom: 8 }}>Admin: <span style={{ color: '#fff' }}>admin@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('student')}>Use Student</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('admin')}>Use Admin</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => { fillDemo('student'); setTimeout(() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 50); }}>Auto Sign In</button>
+            </div>
           </div>
         </div>
       </div>

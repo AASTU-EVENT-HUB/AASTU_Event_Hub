@@ -11,8 +11,9 @@ export default function Footer() {
       <footer style={{
         background: '#0A0F2C',
         borderTop: '2px solid #3B6FFF',
-        padding: '48px 0 24px',
-        marginTop: 'auto',
+        padding: '36px 0 20px',
+        marginTop: 40,
+        position: 'relative',
       }}>
         <div className="container">
           {/* Top row */}
@@ -57,8 +58,8 @@ export default function Footer() {
 
           {/* Bottom row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <p style={{ fontSize: 12, color: '#64748B' }}>
-              © 2024 Addis Ababa Science and Technology University. All rights reserved.
+            <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>
+              © {new Date().getFullYear()} Addis Ababa Science and Technology University. All rights reserved.
             </p>
             <div style={{ display: 'flex', gap: 16 }}>
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(item => (
