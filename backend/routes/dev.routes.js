@@ -12,6 +12,34 @@ async function handleSeed(req, res) {
   console.log("🌱 DEV SEED ROUTE HIT");
   try {
     const results = [];
+
+    // ── Run migrations on existing DB ─────────────────────────────────────
+    // Add columns that may be missing from older DB versions
+    const migrations = [
+      "ALTER TABLE users ADD COLUMN is_suspended INTEGER DEFAULT 0",
+      "ALTER TABLE users ADD COLUMN avatar TEXT",
+      "ALTER TABLE events ADD COLUMN organizer_id INTEGER",
+      "ALTER TABLE events ADD COLUMN status TEXT DEFAULT 'approved'",
+      "ALTER TABLE events ADD COLUMN rejection_reason TEXT",
+      "CREATE TABLE IF NOT EXISTS organizer_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE, club_name TEXT, bio TEXT, logo TEXT, application_status TEXT DEFAULT 'pending', rejection_reason TEXT, applied_at TEXT DEFAULT (datetime('now')), approved_at TEXT)",
+      "CREATE TABLE IF NOT EXISTS suggestions (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, category TEXT, preferred_date TEXT, suggested_by INTEGER NOT NULL, upvote_count INTEGER DEFAULT 0, status TEXT DEFAULT 'open', claimed_by INTEGER, created_at TEXT DEFAULT (datetime('now')))",
+      "CREATE TABLE IF NOT EXISTS suggestion_upvotes (id INTEGER PRIMARY KEY AUTOINCREMENT, suggestion_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now')), UNIQUE (suggestion_id, user_id))",
+      "CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, event_id INTEGER NOT NULL, user_id INTEGER NOT NULL, rating INTEGER NOT NULL, review TEXT, created_at TEXT DEFAULT (datetime('now')), is_visible INTEGER DEFAULT 1, UNIQUE (event_id, user_id))",
+      "CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT, title TEXT, message TEXT, icon TEXT DEFAULT '🔔', event_ref TEXT, is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))",
+    ];
+
+    for (const sql of migrations) {
+      try {
+        await db.execute(sql);
+      } catch (e) {
+        // Ignore "duplicate column" and "table already exists" errors
+        if (!e.message?.includes("duplicate column") && !e.message?.includes("already exists")) {
+          console.warn("Migration warning:", e.message);
+        }
+      }
+    }
+    results.push({ action: "migrations_applied" });
+    console.log("✓ Migrations applied");
     const adminHash    = await bcrypt.hash("12345678", 10);
     const studentHash  = await bcrypt.hash("12345678", 10);
     const orgHash      = await bcrypt.hash("12345678", 10);
