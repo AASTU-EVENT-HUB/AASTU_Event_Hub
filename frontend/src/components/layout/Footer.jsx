@@ -56,12 +56,12 @@ export default function Footer() {
           {/* Divider */}
           <div style={{ height: 1, background: '#1E2A45', marginBottom: 20 }} />
 
-          {/* Bottom row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          {/* Bottom row centered */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>
               © {new Date().getFullYear()} Addis Ababa Science and Technology University. All rights reserved.
             </p>
-            <div style={{ display: 'flex', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(item => (
                 <a key={item} href="#" style={{ fontSize: 12, color: '#64748B', textDecoration: 'none' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#fff'}

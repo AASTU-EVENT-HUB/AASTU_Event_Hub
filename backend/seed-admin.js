@@ -44,7 +44,8 @@ async function main() {
   `);
 
   const adminEmail = "admin@aastu.edu.et";
-  const adminPassword = await bcrypt.hash("admin123", 10);
+  // demo password requested: 12345678
+  const adminPassword = await bcrypt.hash("12345678", 10);
 
   // Check if admin exists
   const existing = db.exec(`SELECT id FROM users WHERE email = '${adminEmail}'`);
@@ -61,22 +62,50 @@ async function main() {
 
   // Also ensure student@aastu.edu.et exists
   const studentEmail = "student@aastu.edu.et";
-  const studentPassword = await bcrypt.hash("student123", 10);
+  // demo password requested: 12345678
+  const studentPassword = await bcrypt.hash("12345678", 10);
   const existingStudent = db.exec(`SELECT id FROM users WHERE email = '${studentEmail}'`);
   if (existingStudent.length === 0 || existingStudent[0].values.length === 0) {
     db.run(
       `INSERT INTO users (name, email, student_id, department, password, role, is_first_login)
        VALUES ('Test Student', '${studentEmail}', 'AAU-2024-CS-001', 'Computer Science', '${studentPassword}', 'student', 0)`
     );
-    console.log("✓ Created student user:", studentEmail, "/ password: student123");
+    console.log("✓ Created student user:", studentEmail, "/ password: 12345678");
+  }
+
+  // Create sample events if not present
+  const eventsExist = db.exec(`SELECT id FROM events LIMIT 1`);
+  if (eventsExist.length === 0 || eventsExist[0].values.length === 0) {
+    // find admin id
+    const adminRow = db.exec(`SELECT id FROM users WHERE email = '${adminEmail}'`);
+    const adminId = (adminRow && adminRow[0] && adminRow[0].values && adminRow[0].values[0]) ? adminRow[0].values[0][0] : 1;
+
+    db.run(`INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, registration_count)
+      VALUES ('Intro to AI Workshop', 'Hands-on workshop on AI basics and practical exercises.', 'Workshop', 'Computer Science', '2026-06-15', '2026-06-15', 'AASTU Hall A', 120, '', 0, 'AI,Workshop', ${adminId}, 0)`);
+
+    db.run(`INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, registration_count)
+      VALUES ('Inter-College Hackathon', '48-hour hackathon with prizes.', 'Hackathon', 'All', '2026-07-10', '2026-07-12', 'Main Campus Grounds', 300, '', 1, 'Hackathon,Teams', ${adminId}, 0)`);
+
+    console.log('✓ Created two sample events (Intro to AI Workshop, Inter-College Hackathon)');
+
+    // register the test student to the first event
+    const studentRow = db.exec(`SELECT id FROM users WHERE email = '${studentEmail}'`);
+    const studentId = (studentRow && studentRow[0] && studentRow[0].values && studentRow[0].values[0]) ? studentRow[0].values[0][0] : null;
+    const eventRow = db.exec(`SELECT id FROM events WHERE title = 'Intro to AI Workshop' LIMIT 1`);
+    const eventId = (eventRow && eventRow[0] && eventRow[0].values && eventRow[0].values[0]) ? eventRow[0].values[0][0] : null;
+    if (studentId && eventId) {
+      db.run(`INSERT OR IGNORE INTO registrations (student_id, event_id, qr_code, status) VALUES (${studentId}, ${eventId}, 'QR-DEMO-${Date.now()}', 'confirmed')`);
+      db.run(`UPDATE events SET registration_count = registration_count + 1 WHERE id = ${eventId}`);
+      console.log('✓ Registered demo student for Intro to AI Workshop');
+    }
   }
 
   const data = db.export();
   fs.writeFileSync(SQLITE_FILE, Buffer.from(data));
   console.log("✓ Database saved to", SQLITE_FILE);
   console.log("\nLogin credentials:");
-  console.log("  Admin:   admin@aastu.edu.et / admin123");
-  console.log("  Student: student@aastu.edu.et / student123");
+  console.log("  Admin:   admin@aastu.edu.et / 12345678");
+  console.log("  Student: student@aastu.edu.et / 12345678");
 }
 
 main().catch(console.error);

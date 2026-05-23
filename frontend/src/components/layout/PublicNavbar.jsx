@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -10,6 +11,7 @@ export default function PublicNavbar() {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -88,15 +90,17 @@ export default function PublicNavbar() {
               </div>
             )}
 
-            {/* Help */}
-            <button
-              onClick={() => setShowHelp(true)}
-              style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid #1E2A45',
-                borderRadius: 8, color: '#94A3B8', fontSize: 15, cursor: 'pointer',
-                width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >❓</button>
+            {/* Help — hide on landing page (/) since it's not essential there */}
+            {location.pathname !== '/' && (
+              <button
+                onClick={() => setShowHelp(true)}
+                style={{
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid #1E2A45',
+                  borderRadius: 8, color: '#94A3B8', fontSize: 15, cursor: 'pointer',
+                  width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >❓</button>
+            )}
 
             {user ? (
               <div style={{ position: 'relative' }}>
