@@ -43,7 +43,21 @@ CREATE TABLE IF NOT EXISTS users (
   password TEXT,
   role TEXT DEFAULT 'student',
   is_first_login INTEGER DEFAULT 1,
+  is_suspended INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS organizer_profiles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL UNIQUE,
+  club_name TEXT,
+  bio TEXT,
+  logo TEXT,
+  application_status TEXT DEFAULT 'pending',
+  rejection_reason TEXT,
+  applied_at TEXT DEFAULT (datetime('now')),
+  approved_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -60,8 +74,12 @@ CREATE TABLE IF NOT EXISTS events (
   is_team_event INTEGER DEFAULT 0,
   tags TEXT,
   created_by INTEGER,
+  organizer_id INTEGER,
+  status TEXT DEFAULT 'approved',
+  rejection_reason TEXT,
   registration_count INTEGER DEFAULT 0,
-  FOREIGN KEY (created_by) REFERENCES users(id)
+  FOREIGN KEY (created_by) REFERENCES users(id),
+  FOREIGN KEY (organizer_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS registrations (
@@ -74,6 +92,44 @@ CREATE TABLE IF NOT EXISTS registrations (
   UNIQUE (student_id, event_id),
   FOREIGN KEY (student_id) REFERENCES users(id),
   FOREIGN KEY (event_id) REFERENCES events(id)
+);
+
+CREATE TABLE IF NOT EXISTS suggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  preferred_date TEXT,
+  suggested_by INTEGER NOT NULL,
+  upvote_count INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'open',
+  claimed_by INTEGER,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (suggested_by) REFERENCES users(id),
+  FOREIGN KEY (claimed_by) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS suggestion_upvotes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  suggestion_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE (suggestion_id, user_id),
+  FOREIGN KEY (suggestion_id) REFERENCES suggestions(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  rating INTEGER NOT NULL,
+  review TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  is_visible INTEGER DEFAULT 1,
+  UNIQUE (event_id, user_id),
+  FOREIGN KEY (event_id) REFERENCES events(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 `;
 

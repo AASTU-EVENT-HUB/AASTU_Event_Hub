@@ -17,6 +17,9 @@ const analyticsRoutes = require("./routes/analytics.routes");
 const usersRoutes = require("./routes/users.routes");
 const googleRoutes = require("./routes/google.routes");
 const devRoutes = require("./routes/dev.routes");
+const organizerRoutes = require("./routes/organizer.routes");
+const suggestionsRoutes = require("./routes/suggestions.routes");
+const feedbackRoutes = require("./routes/feedback.routes");
 
 const errorHandler = require("./middleware/errorHandler");
 
@@ -65,7 +68,7 @@ app.get("/", (req, res) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
-app.use("/api/auth", googleRoutes);       // Google OAuth: /api/auth/google
+app.use("/api/auth", googleRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);
 app.use("/api/notifications", notificationsRoutes);
@@ -73,8 +76,11 @@ app.use("/api/proposals", proposalsRoutes);
 app.use("/api/checkin", checkinRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/organizer", organizerRoutes);
+app.use("/api/suggestions", suggestionsRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
-// ── Dev / Seed routes (always active — needed for demo seeding in production) ─
+// ── Dev / Seed routes ─────────────────────────────────────────────────────────
 app.use("/api/dev", devRoutes);
 
 app.use(errorHandler);

@@ -73,21 +73,55 @@ router.post("/seed-demo", async (req, res) => {
       console.log("✓ Created student user:", studentEmail);
     }
 
-    // ── Sample events ───────────────────────────────────────────────────────
+    // ── Organizer demo user ─────────────────────────────────────────────────
+    const organizerEmail = "organizer@aastu.edu.et";
+    const [existingOrg] = await db.execute(
+      "SELECT id FROM users WHERE email = ?", [organizerEmail]
+    );
+    const orgHash = await bcrypt.hash("12345678", 10);
+    if (existingOrg.length > 0) {
+      await db.execute(
+        "UPDATE users SET password = ?, role = 'organizer', is_first_login = 0 WHERE email = ?",
+        [orgHash, organizerEmail]
+      );
+      results.push({ user: organizerEmail, action: "password_reset" });
+    } else {
+      await db.execute(
+        `INSERT INTO users (name, email, student_id, department, password, role, is_first_login)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ["Demo Organizer", organizerEmail, "ORG-001", "Computer Science", orgHash, "organizer", 0]
+      );
+      results.push({ user: organizerEmail, action: "created", role: "organizer" });
+    }
+    // Ensure organizer profile exists
+    const [orgRow] = await db.execute("SELECT id FROM users WHERE email = ?", [organizerEmail]);
+    const orgUserId = orgRow[0]?.id;
+    if (orgUserId) {
+      const [orgProfile] = await db.execute("SELECT id FROM organizer_profiles WHERE user_id = ?", [orgUserId]);
+      if (orgProfile.length === 0) {
+        await db.execute(
+          `INSERT INTO organizer_profiles (user_id, club_name, bio, application_status, approved_at)
+           VALUES (?, ?, ?, 'approved', datetime('now'))`,
+          [orgUserId, "AASTU Tech Club", "Official demo organizer account"]
+        );
+      }
+    }
     const [eventsCheck] = await db.execute("SELECT id FROM events LIMIT 1");
     if (eventsCheck.length === 0) {
       const [adminRow] = await db.execute("SELECT id FROM users WHERE email = ?", [adminEmail]);
       const adminId = adminRow[0]?.id || 1;
+      const [orgRow2] = await db.execute("SELECT id FROM users WHERE email = ?", [organizerEmail]);
+      const orgId = orgRow2[0]?.id || adminId;
 
       await db.execute(
-        `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, registration_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ["Intro to AI Workshop", "Hands-on workshop on AI basics.", "Workshop", "Computer Science", "2026-06-15", "2026-06-15", "AASTU Hall A", 120, "", 0, "AI,Workshop", adminId, 0]
+        `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, organizer_id, status, registration_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ["Intro to AI Workshop", "Hands-on workshop on AI basics.", "Workshop", "Computer Science", "2026-06-15", "2026-06-15", "AASTU Hall A", 120, "", 0, "AI,Workshop", orgId, orgId, "approved", 0]
       );
       await db.execute(
-        `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, registration_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ["Inter-College Hackathon", "48-hour hackathon with prizes.", "Hackathon", "All", "2026-07-10", "2026-07-12", "Main Campus Grounds", 300, "", 1, "Hackathon,Teams", adminId, 0]
+        `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, organizer_id, status, registration_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ["Inter-College Hackathon", "48-hour hackathon with prizes.", "Hackathon", "All", "2026-07-10", "2026-07-12", "Main Campus Grounds", 300, "", 1, "Hackathon,Teams", orgId, orgId, "approved", 0]
       );
       results.push({ action: "created_sample_events", count: 2 });
       console.log("✓ Created 2 sample events");
@@ -116,6 +150,7 @@ router.post("/seed-demo", async (req, res) => {
       message: "Demo data seeded successfully — passwords reset",
       credentials: {
         admin: { email: "admin@aastu.edu.et", password: "12345678" },
+        organizer: { email: "organizer@aastu.edu.et", password: "12345678" },
         student: { email: "student@aastu.edu.et", password: "12345678" },
       },
       results,
