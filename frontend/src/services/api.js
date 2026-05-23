@@ -100,6 +100,14 @@ export const feedbackAPI = {
   hide: (id) => apiClient.patch(`/feedback/admin/${id}/hide`),
 };
 
+// ── Proposals (legacy — kept for ProposeEventPage & AdminApprovalPage) ────────
+export const proposalsAPI = {
+  getAll: () => apiClient.get('/proposals'),
+  create: (data) => apiClient.post('/proposals', data),
+  update: (id, data) => apiClient.put(`/proposals/${id}`, data),
+  delete: (id) => apiClient.delete(`/proposals/${id}`),
+};
+
 // ── Check-in (admin legacy) ───────────────────────────────────────────────────
 export const checkinAPI = {
   scan: (qrData, eventId) => apiClient.post('/checkin/scan', { qrData, eventId }),
