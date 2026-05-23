@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT DEFAULT 'student',
   is_first_login INTEGER DEFAULT 1,
   is_suspended INTEGER DEFAULT 0,
+  avatar TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -129,6 +130,19 @@ CREATE TABLE IF NOT EXISTS feedback (
   is_visible INTEGER DEFAULT 1,
   UNIQUE (event_id, user_id),
   FOREIGN KEY (event_id) REFERENCES events(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT,
+  title TEXT,
+  message TEXT,
+  icon TEXT DEFAULT '🔔',
+  event_ref TEXT,
+  is_read INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 `;

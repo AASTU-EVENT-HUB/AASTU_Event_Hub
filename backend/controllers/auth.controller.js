@@ -137,8 +137,8 @@ exports.login = async (req, res, next) => {
         role: user.role,
         department: user.department,
         studentId: user.student_id,
+        avatar: user.avatar || null,
         isFirstLogin: Boolean(user.is_first_login),
-        // onboardingComplete mirrors isFirstLogin (false = onboarding done)
         onboardingComplete: !Boolean(user.is_first_login),
       },
     });

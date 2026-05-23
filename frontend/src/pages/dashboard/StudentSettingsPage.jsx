@@ -5,6 +5,7 @@ import Topbar from '../../components/layout/Topbar';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { CATEGORIES, DEPARTMENTS } from '../../data/mockData';
+import { usersAPI } from '../../services/api';
 
 const TABS = ['Profile', 'Security', 'Notifications', 'Interests', 'Attendance History', 'Account'];
 
@@ -134,10 +135,22 @@ function ProfileTab({ user, updateUser, toast }) {
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Required', 'Name cannot be empty'); return; }
     setSaving(true);
-    await new Promise(r => setTimeout(r, 800));
-    updateUser({ ...form, avatar });
+    try {
+      // Save avatar to backend if changed
+      if (avatar !== user?.avatar) {
+        await usersAPI.updateAvatar(avatar);
+      }
+      // Save profile fields
+      await usersAPI.updateProfile({ name: form.name, department: form.department });
+      // Update local state so avatar/name shows everywhere immediately
+      updateUser({ ...form, avatar });
+      toast.success('Profile updated', 'Your changes have been saved');
+    } catch {
+      // Even if backend fails, update locally so UI stays consistent
+      updateUser({ ...form, avatar });
+      toast.success('Profile updated', 'Saved locally');
+    }
     setSaving(false);
-    toast.success('Profile updated', 'Your changes have been saved');
   };
 
   const initials = (user?.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();

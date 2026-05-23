@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { createForUser } = require("./notifications.controller");
 
 // POST /api/events — organizer creates event (status=pending), admin creates approved
 exports.createEvent = async (req, res, next) => {
@@ -164,6 +165,18 @@ exports.approveEvent = async (req, res, next) => {
     if (rows.length === 0) return res.status(404).json({ success: false, message: "Event not found" });
 
     await db.execute(`UPDATE events SET status = 'approved', rejection_reason = NULL WHERE id = ?`, [id]);
+
+    // Notify organizer
+    if (rows[0].organizer_id) {
+      createForUser(rows[0].organizer_id, {
+        type: "event_approved",
+        title: "Event Approved ✅",
+        message: `Your event "${rows[0].title}" has been approved and is now live!`,
+        icon: "🎉",
+        eventRef: String(id),
+      });
+    }
+
     res.json({ success: true, message: "Event approved" });
   } catch (error) {
     next(error);
@@ -181,6 +194,18 @@ exports.rejectEvent = async (req, res, next) => {
     if (rows.length === 0) return res.status(404).json({ success: false, message: "Event not found" });
 
     await db.execute(`UPDATE events SET status = 'rejected', rejection_reason = ? WHERE id = ?`, [reason, id]);
+
+    // Notify organizer
+    if (rows[0].organizer_id) {
+      createForUser(rows[0].organizer_id, {
+        type: "event_rejected",
+        title: "Event Not Approved ❌",
+        message: `Your event "${rows[0].title}" was not approved. Reason: ${reason}`,
+        icon: "❌",
+        eventRef: String(id),
+      });
+    }
+
     res.json({ success: true, message: "Event rejected" });
   } catch (error) {
     next(error);

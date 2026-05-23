@@ -1,17 +1,23 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { notificationsAPI } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(null);
 
 export function NotificationProvider({ children }) {
+  const { user, token } = useAuth();
   const [notifications, setNotifications] = useState([]);
 
-  // Load from backend on mount
+  // Load from backend whenever user logs in — clear when they log out
   useEffect(() => {
+    if (!user || !token) {
+      setNotifications([]);
+      return;
+    }
     notificationsAPI.getAll()
       .then(res => setNotifications(res.data.notifications || []))
-      .catch(() => {}); // Fail silently — backend may not be running
-  }, []);
+      .catch(() => setNotifications([]));
+  }, [user?.id, token]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -29,14 +35,9 @@ export function NotificationProvider({ children }) {
     try { await notificationsAPI.delete(id); } catch {}
   }, []);
 
-  const addNotification = useCallback(async (notif) => {
+  const addNotification = useCallback((notif) => {
     const local = { ...notif, id: Date.now(), read: false, time: 'Just now' };
     setNotifications(prev => [local, ...prev]);
-    try {
-      const res = await notificationsAPI.create({ ...notif, sentAt: 'Just now' });
-      // Replace local with server version
-      setNotifications(prev => prev.map(n => n.id === local.id ? res.data.notification : n));
-    } catch {}
   }, []);
 
   return (

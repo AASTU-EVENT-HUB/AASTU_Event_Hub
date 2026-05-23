@@ -113,22 +113,35 @@ router.post("/seed-demo", async (req, res) => {
       const [orgRow2] = await db.execute("SELECT id FROM users WHERE email = ?", [organizerEmail]);
       const orgId = orgRow2[0]?.id || adminId;
 
-      await db.execute(
-        `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, organizer_id, status, registration_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ["Intro to AI Workshop", "Hands-on workshop on AI basics.", "Workshop", "Computer Science", "2026-06-15", "2026-06-15", "AASTU Hall A", 120, "", 0, "AI,Workshop", orgId, orgId, "approved", 0]
-      );
-      await db.execute(
-        `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, organizer_id, status, registration_count)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ["Inter-College Hackathon", "48-hour hackathon with prizes.", "Hackathon", "All", "2026-07-10", "2026-07-12", "Main Campus Grounds", 300, "", 1, "Hackathon,Teams", orgId, orgId, "approved", 0]
-      );
-      results.push({ action: "created_sample_events", count: 2 });
-      console.log("✓ Created 2 sample events");
+      // All 12 mock events assigned to the demo organizer
+      const mockEvents = [
+        ["AASTU Grand Hackathon 2024", "Ethiopia's premier collegiate innovation challenge. 48 hours of intense creation, networking with industry leaders, and competing for over 500,000 ETB in prizes.", "Hackathons", "Computer Science", "2026-05-31", "2026-06-02", "AASTU Tech Hall, Addis Ababa", 500, "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&q=80", 1, "Hackathon,Competition,Tech", 458],
+        ["HackAASTU 24: 48h Coding Sprint", "A 48-hour coding sprint focused on building real-world solutions for Ethiopian startups.", "Hackathons", "Software Engineering", "2026-05-23", "2026-05-25", "Main Tech Hall, Block B", 500, "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=80", 1, "Hackathon,Coding,Sprint", 425],
+        ["AASTU Creative Arts Gala", "An evening celebrating creativity, culture, and artistic expression from AASTU students.", "Cultural", "Architecture", "2026-05-23", "2026-05-23", "University Amphitheater", 200, "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=80", 0, "Cultural,Arts,Gala", 120],
+        ["Architecture & Sustainability Forum", "Exploring sustainable design principles and green architecture for Ethiopian cities.", "Seminars", "Architecture", "2026-06-01", "2026-06-01", "Hall 5B, Design Wing", 150, "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=80", 0, "Architecture,Sustainability,Forum", 45],
+        ["The Startup Mindset Workshop", "Learn the fundamentals of startup thinking, lean methodology, and pitching to investors.", "Workshops", "Business", "2026-06-07", "2026-06-07", "Incubation Center", 80, "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1200&q=80", 0, "Startup,Workshop,Business", 74],
+        ["Bio-Tech & Ethics Summit", "Examining the ethical dimensions of modern biotechnology and its impact on society.", "Seminars", "Biotechnology", "2026-06-14", "2026-06-14", "Seminar Hall 1A", 300, "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&q=80", 0, "Biotech,Ethics,Science", 135],
+        ["Drama Society: Annual Play", "The annual theatrical production showcasing AASTU student talent in performing arts.", "Cultural", "Arts", "2026-06-21", "2026-06-21", "Main Theater", 400, "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=1200&q=80", 0, "Drama,Theater,Cultural", 312],
+        ["Data Science Workshop", "Hands-on workshop covering Python, pandas, and machine learning fundamentals.", "Workshops", "Computer Science", "2026-06-06", "2026-06-06", "AASTU Library", 60, "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=80", 0, "Data Science,Python,ML", 58],
+        ["Robotics Expo 2024", "Showcase of student-built robots and automation projects from across departments.", "Tech", "Mechanical Engineering", "2026-05-18", "2026-05-20", "Mechanical Wing", 200, "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&q=80", 0, "Robotics,Tech,Expo", 200],
+        ["Cybersecurity Summit", "Deep dive into ethical hacking, network security, and digital forensics.", "Tech", "Computer Science", "2026-05-13", "2026-05-14", "Main Auditorium", 300, "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&q=80", 0, "Cybersecurity,Hacking,Tech", 300],
+        ["Startup Pitch Night", "Student startups pitch their ideas to a panel of investors and industry mentors.", "Networking", "Business", "2026-06-12", "2026-06-12", "Innovation Hub", 150, "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=1200&q=80", 0, "Startup,Pitch,Networking", 89],
+        ["Industrial Automation 4.0", "Exploring Industry 4.0 technologies including IoT, AI, and smart manufacturing.", "Tech", "Mechanical Engineering", "2026-05-23", "2026-05-23", "Engineering Block, Hall B", 200, "https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=1200&q=80", 0, "Automation,IoT,Industry 4.0", 45],
+      ];
+
+      for (const [title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, registration_count] of mockEvents) {
+        await db.execute(
+          `INSERT INTO events (title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, created_by, organizer_id, status, registration_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?)`,
+          [title, description, category, department, start_date, end_date, location, capacity, banner_image, is_team_event, tags, orgId, orgId, registration_count]
+        );
+      }
+      results.push({ action: "created_sample_events", count: mockEvents.length });
+      console.log(`✓ Created ${mockEvents.length} sample events assigned to organizer`);
 
       // Register student to first event
       const [studentRow] = await db.execute("SELECT id FROM users WHERE email = ?", [studentEmail]);
-      const [eventRow] = await db.execute("SELECT id FROM events WHERE title = ? LIMIT 1", ["Intro to AI Workshop"]);
+      const [eventRow] = await db.execute("SELECT id FROM events WHERE title = ? LIMIT 1", ["AASTU Grand Hackathon 2024"]);
       const studentId = studentRow[0]?.id;
       const eventId = eventRow[0]?.id;
       if (studentId && eventId) {
@@ -136,11 +149,17 @@ router.post("/seed-demo", async (req, res) => {
           `INSERT OR IGNORE INTO registrations (student_id, event_id, qr_code, status) VALUES (?, ?, ?, ?)`,
           [studentId, eventId, `QR-DEMO-${Date.now()}`, "confirmed"]
         );
-        await db.execute("UPDATE events SET registration_count = registration_count + 1 WHERE id = ?", [eventId]);
         results.push({ action: "registered_student_to_event" });
       }
     } else {
-      results.push({ action: "events_already_exist" });
+      // Update existing events to assign to organizer if they have no organizer_id
+      if (orgUserId) {
+        await db.execute(
+          "UPDATE events SET organizer_id = ?, created_by = ? WHERE organizer_id IS NULL OR organizer_id = 0",
+          [orgUserId, orgUserId]
+        ).catch(() => {});
+        results.push({ action: "assigned_existing_events_to_organizer" });
+      }
     }
 
     console.log("🌱 Seed complete:", results);

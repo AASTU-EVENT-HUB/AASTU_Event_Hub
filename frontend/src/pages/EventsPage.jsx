@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import PublicNavbar from '../components/layout/PublicNavbar';
 import Footer from '../components/layout/Footer';
 import EventCard from '../components/EventCard';
-import StatusBadge from '../components/StatusBadge';
-import { CATEGORIES, DEPARTMENTS, getEventStatus, MOCK_EVENTS } from '../data/mockData';
+import { CATEGORIES, DEPARTMENTS } from '../data/mockData';
 import { eventsAPI } from '../services/api';
 
 const SORT_OPTIONS = ['Newest First', 'Oldest First', 'Most Popular', 'Alphabetical'];
@@ -13,7 +12,7 @@ const PER_PAGE = 6;
 export default function EventsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [events, setEvents] = useState(MOCK_EVENTS);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -33,12 +32,12 @@ export default function EventsPage() {
       try {
         setLoading(true);
         const res = await eventsAPI.getAll();
-        setEvents(res.data.events || res.data || []);
+        setEvents(res.data.events || []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch events:', err);
-        setEvents(MOCK_EVENTS); // Fallback to mock data
-        setError('Using mock data');
+        setEvents([]);
+        setError('Could not load events. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -59,23 +58,29 @@ export default function EventsPage() {
   }, [filters, setSearchParams]);
 
   const filtered = events.filter(e => {
-    if (filters.q && !e.title.toLowerCase().includes(filters.q.toLowerCase()) &&
-        !e.category.toLowerCase().includes(filters.q.toLowerCase())) return false;
-    if (filters.categories.length && !filters.categories.includes(e.category)) return false;
+    const title = e.title || '';
+    const category = e.category || '';
+    const startDate = e.start_date || e.startDate || '';
+    if (filters.q && !title.toLowerCase().includes(filters.q.toLowerCase()) &&
+        !category.toLowerCase().includes(filters.q.toLowerCase())) return false;
+    if (filters.categories.length && !filters.categories.includes(category)) return false;
     if (filters.department && e.department !== filters.department) return false;
-    if (filters.dateFrom && new Date(e.startDate) < new Date(filters.dateFrom)) return false;
-    if (filters.dateTo && new Date(e.startDate) > new Date(filters.dateTo)) return false;
+    if (filters.dateFrom && startDate && new Date(startDate) < new Date(filters.dateFrom)) return false;
+    if (filters.dateTo && startDate && new Date(startDate) > new Date(filters.dateTo)) return false;
     return true;
   }).sort((a, b) => {
-    if (sort === 'Newest First') return new Date(b.startDate) - new Date(a.startDate);
-    if (sort === 'Oldest First') return new Date(a.startDate) - new Date(b.startDate);
-    if (sort === 'Most Popular') return b.registered - a.registered;
-    return a.title.localeCompare(b.title);
+    const aDate = a.start_date || a.startDate || '';
+    const bDate = b.start_date || b.startDate || '';
+    const aReg = a.registration_count || a.registered || 0;
+    const bReg = b.registration_count || b.registered || 0;
+    if (sort === 'Newest First') return new Date(bDate) - new Date(aDate);
+    if (sort === 'Oldest First') return new Date(aDate) - new Date(bDate);
+    if (sort === 'Most Popular') return bReg - aReg;
+    return (a.title || '').localeCompare(b.title || '');
   });
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const featured = events.find(e => e.isFeatured && getEventStatus(e) !== 'ended');
 
   const toggleCategory = (cat) => {
     setFilters(f => ({
@@ -180,7 +185,7 @@ export default function EventsPage() {
               <Link to="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
               <span style={{ margin: '0 6px' }}>›</span>
               <span style={{ color: '#fff' }}>Events</span>
-              {filtered.length !== MOCK_EVENTS.length && (
+              {filtered.length !== events.length && (
                 <span style={{ color: '#3B6FFF', marginLeft: 8 }}>({filtered.length} results)</span>
               )}
             </div>
@@ -210,53 +215,14 @@ export default function EventsPage() {
             />
           </div>
 
-          {/* Featured banner */}
-          {featured && !filters.q && filters.categories.length === 0 && (
-            <div style={{
-              position: 'relative',
-              borderRadius: 16,
-              overflow: 'hidden',
-              marginBottom: 24,
-              height: 220,
-            }}>
-              <img
-                src={featured.banner}
-                alt={featured.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(to right, rgba(10,15,44,0.95) 40%, rgba(10,15,44,0.3) 100%)',
-              }} />
-              <div style={{ position: 'absolute', inset: 0, padding: '28px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(245,166,35,0.2)', border: '1px solid rgba(245,166,35,0.4)',
-                  borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#F5A623', fontWeight: 600,
-                  marginBottom: 10, width: 'fit-content',
-                }}>
-                  ★ FEATURED EVENT
-                </div>
-                <h2 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 8, maxWidth: 500 }}>
-                  {featured.title}
-                </h2>
-                <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 16, maxWidth: 480, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {featured.description}
-                </p>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => navigate(`/events/${featured.id}/register`)}>
-                    Get Your Ticket
-                  </button>
-                  <button className="btn btn-outline btn-sm" onClick={() => navigate(`/events/${featured.id}`)}>
-                    Learn More
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Events grid */}
-          {paginated.length > 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: '#64748B' }}>
+              <div style={{ width: 40, height: 40, border: '3px solid #1E2A45', borderTopColor: '#3B6FFF', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              Loading events...
+            </div>
+          ) : paginated.length > 0 ? (
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -325,19 +291,6 @@ export default function EventsPage() {
           )}
         </main>
       </div>
-
-      {/* Floating create event button */}
-      <button
-        className="btn btn-primary"
-        onClick={() => navigate('/admin/events/create')}
-        style={{
-          position: 'fixed', bottom: 24, right: 24,
-          borderRadius: 24, boxShadow: '0 4px 20px rgba(59,111,255,0.4)',
-          zIndex: 50,
-        }}
-      >
-        + Create Event
-      </button>
 
       <Footer />
     </div>

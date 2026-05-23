@@ -60,6 +60,8 @@ export const usersAPI = {
   updateRole: (id, role) => apiClient.put(`/users/${id}/role`, { role }),
   delete: (id) => apiClient.delete(`/users/${id}`),
   suspend: (id, suspended) => apiClient.patch(`/users/${id}/suspend`, { suspended }),
+  updateAvatar: (avatar) => apiClient.patch('/users/me/avatar', { avatar }),
+  updateProfile: (data) => apiClient.patch('/users/me', data),
 };
 
 // ── Organizer ─────────────────────────────────────────────────────────────────

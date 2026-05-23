@@ -1,6 +1,6 @@
 const db = require("../config/db");
-
 const generateQR = require("../utils/generateQR");
+const { createForUser } = require("./notifications.controller");
 
 exports.registerForEvent = async (req, res, next) => {
   try {
@@ -87,6 +87,26 @@ exports.registerForEvent = async (req, res, next) => {
         status: "confirmed",
       },
     });
+
+    // Notify student of confirmed registration
+    createForUser(studentId, {
+      type: "registration",
+      title: "Registration Confirmed ✅",
+      message: `You're registered for "${event.title}"`,
+      icon: "🎟",
+      eventRef: String(eventId),
+    });
+
+    // Notify organizer of new registration
+    if (event.organizer_id) {
+      createForUser(event.organizer_id, {
+        type: "new_registration",
+        title: "New Registration",
+        message: `A student registered for "${event.title}"`,
+        icon: "👤",
+        eventRef: String(eventId),
+      });
+    }
   } catch (error) {
     next(error);
   }
