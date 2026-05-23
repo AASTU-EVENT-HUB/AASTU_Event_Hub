@@ -221,7 +221,7 @@ export default function LoginPage() {
             background: 'rgba(59,111,255,0.08)', border: '1px solid rgba(59,111,255,0.2)',
             borderRadius: 10, fontSize: 12, color: '#94A3B8',
           }}>
-            <div style={{ fontWeight: 600, color: '#3B6FFF', marginBottom: 6 }}>🔑 Demo credentials</div>
+            <div style={{ fontWeight: 600, color: '#3B6FFF', marginBottom: 6 }}> Demo credentials</div>
             <div style={{ marginBottom: 4 }}>Student: <span style={{ color: '#fff' }}>student@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
             <div style={{ marginBottom: 4 }}>Organizer: <span style={{ color: '#fff' }}>organizer@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
             <div style={{ marginBottom: 8 }}>Admin: <span style={{ color: '#fff' }}>admin@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
@@ -229,7 +229,6 @@ export default function LoginPage() {
               <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('student')}>Student</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('organizer')} style={{ borderColor: '#F5A623', color: '#F5A623' }}>Organizer</button>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('admin')} style={{ borderColor: '#EF4444', color: '#EF4444' }}>Admin</button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => { fillDemo('student'); setTimeout(() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 50); }}>Auto Sign In</button>
             </div>
           </div>
         </div>
