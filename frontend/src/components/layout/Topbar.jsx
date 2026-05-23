@@ -25,8 +25,8 @@ export default function Topbar({ placeholder = 'Search events, venues, or organi
     navigate('/login');
   };
 
-  const dashboardPath = user?.role === 'admin' ? '/admin' : '/dashboard';
-  const settingsPath = user?.role === 'admin' ? '/admin/settings' : '/dashboard/settings';
+  const dashboardPath = user?.role === 'admin' ? '/admin' : user?.role === 'organizer' ? '/organizer' : '/dashboard';
+  const settingsPath = user?.role === 'admin' ? '/admin/settings' : user?.role === 'organizer' ? '/organizer/settings' : '/dashboard/settings';
 
   return (
     <>

@@ -39,12 +39,10 @@ export default function LoginPage() {
     if (result.success) {
       toast.success('Welcome back!', `Signed in as ${result.user.name}`);
       const { role, onboardingComplete } = result.user;
-      if (role === 'admin') {
-        navigate('/admin', { replace: true });
-      } else if (!onboardingComplete) {
-        navigate('/onboarding', { replace: true });
-      } else {
-        // Redirect to the page they were trying to access, or student dashboard
+      if (role === 'admin') navigate('/admin', { replace: true });
+      else if (role === 'organizer') navigate('/organizer', { replace: true });
+      else if (!onboardingComplete) navigate('/onboarding', { replace: true });
+      else {
         const destination = from === '/login' || from === '/' ? '/dashboard' : from;
         navigate(destination, { replace: true });
       }
@@ -55,11 +53,9 @@ export default function LoginPage() {
   };
 
   const fillDemo = (role) => {
-    if (role === 'student') {
-      setForm({ email: 'student@aastu.edu.et', password: '12345678', remember: false });
-    } else {
-      setForm({ email: 'admin@aastu.edu.et', password: '12345678', remember: false });
-    }
+    if (role === 'student') setForm({ email: 'student@aastu.edu.et', password: '12345678', remember: false });
+    else if (role === 'organizer') setForm({ email: 'organizer@aastu.edu.et', password: '12345678', remember: false });
+    else setForm({ email: 'admin@aastu.edu.et', password: '12345678', remember: false });
   };
 
   // If navigated with demo credentials (from HomePage), prefill the form
@@ -226,11 +222,13 @@ export default function LoginPage() {
             borderRadius: 10, fontSize: 12, color: '#94A3B8',
           }}>
             <div style={{ fontWeight: 600, color: '#3B6FFF', marginBottom: 6 }}>🔑 Demo credentials</div>
-            <div style={{ marginBottom: 6 }}>Student: <span style={{ color: '#fff' }}>student@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
+            <div style={{ marginBottom: 4 }}>Student: <span style={{ color: '#fff' }}>student@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
+            <div style={{ marginBottom: 4 }}>Organizer: <span style={{ color: '#fff' }}>organizer@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
             <div style={{ marginBottom: 8 }}>Admin: <span style={{ color: '#fff' }}>admin@aastu.edu.et</span> / <span style={{ color: '#fff' }}>12345678</span></div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('student')}>Use Student</button>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('admin')}>Use Admin</button>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('student')}>Student</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('organizer')} style={{ borderColor: '#F5A623', color: '#F5A623' }}>Organizer</button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => fillDemo('admin')} style={{ borderColor: '#EF4444', color: '#EF4444' }}>Admin</button>
               <button type="button" className="btn btn-primary btn-sm" onClick={() => { fillDemo('student'); setTimeout(() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 50); }}>Auto Sign In</button>
             </div>
           </div>
