@@ -17,7 +17,13 @@ services:
       - key: PORT
         value: 10000
       - key: DB_TYPE
-        value: mysql
+        value: sqlite
+      # CORS: allow the production frontend URL (comma-separated for multiple)
+      - key: CORS_ORIGIN
+        value: "https://aastu-event-hub.onrender.com"
+      # FRONTEND_URL: used by Google OAuth redirect
+      - key: FRONTEND_URL
+        value: "https://aastu-event-hub.onrender.com"
 
   - type: static_site
     name: aastu-frontend

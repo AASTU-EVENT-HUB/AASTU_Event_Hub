@@ -11,6 +11,10 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
+  // Log API URL in dev for debugging
+  if (import.meta.env.DEV) {
+    console.log('[LoginPage] API URL:', import.meta.env.VITE_API_URL || 'http://localhost:5000/api');
+  }
 
   const [form, setForm] = useState({ email: '', password: '', remember: false });
   const [loading, setLoading] = useState(false);
@@ -34,12 +38,19 @@ export default function LoginPage() {
     setLoading(false);
     if (result.success) {
       toast.success('Welcome back!', `Signed in as ${result.user.name}`);
-      if (result.user.role === 'admin') navigate('/admin');
-      else if (!result.user.onboardingComplete) navigate('/onboarding');
-      else navigate(from);
+      const { role, onboardingComplete } = result.user;
+      if (role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (!onboardingComplete) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        // Redirect to the page they were trying to access, or student dashboard
+        const destination = from === '/login' || from === '/' ? '/dashboard' : from;
+        navigate(destination, { replace: true });
+      }
     } else {
-      toast.error('Login failed', result.error);
-      setErrors({ general: result.error });
+      toast.error('Login failed', result.error || 'Invalid credentials');
+      setErrors({ general: result.error || 'Invalid email or password' });
     }
   };
 
